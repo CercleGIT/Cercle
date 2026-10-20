@@ -10,7 +10,7 @@ export default function Fil({ user, groupId = null }) {
 
   const charger = useCallback(async () => {
     let q = supabase.from('posts')
-      .select('id, texte, created_at, auteur, profiles(nom), likes(user_id)')
+      .select('id, texte, created_at, auteur, profiles!auteur(nom), likes(user_id)')
       .order('created_at', { ascending: false }).limit(50)
     q = groupId ? q.eq('group_id', groupId) : q.is('group_id', null)
     const { data, error } = await q
