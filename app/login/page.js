@@ -28,7 +28,7 @@ export default function Login() {
       ? await supabase.auth.signUp({ email, password: mdp, options: { data: { nom: nom.trim() } } })
       : await supabase.auth.signInWithPassword({ email, password: mdp })
     setCharge(false)
-    if (error) return setMsg({ err: ERREURS[error.message] || 'Une erreur est survenue. Réessaie.' })
+    if (error) return setMsg({ err: (ERREURS[error.message] || 'Une erreur est survenue.') + ' [' + error.message + ']' })
     if (inscription && !data.session) return setMsg({ ok: 'Compte créé. Vérifie ta boîte mail pour confirmer ton adresse.' })
     router.replace('/')
   }
