@@ -1,5 +1,6 @@
 'use client'
 import { useCallback, useEffect, useState } from 'react'
+import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { redimensionner } from '@/lib/image'
 import Avatar from '@/components/Avatar'
@@ -63,6 +64,13 @@ export default function Fil({ user, groupId = null }) {
     setInfo(error ? 'Partage impossible.' : 'Publication partagée sur ton fil.')
     charger()
   }
+  async function modifier(p) {
+    const t = window.prompt('Modifier ta publication :', p.texte || '')
+    if (t === null) return
+    const { error } = await supabase.from('posts').update({ texte: t.trim() }).eq('id', p.id)
+    setInfo(error ? 'Modification impossible.' : 'Publication modifiée.')
+    charger()
+  }
   async function supprimer(id) { await supabase.from('posts').delete().eq('id', id); charger() }
   async function signaler(id) {
     const motif = window.prompt('Pourquoi signales-tu cette publication ? (spam, harcèlement, contenu inapproprié, autre)', '')
@@ -97,7 +105,7 @@ export default function Fil({ user, groupId = null }) {
           <article className="box" key={p.id}>
             <div className="entete">
               <Avatar nom={p.profiles?.nom} url={p.profiles?.avatar_url} />
-              <div><b>{p.profiles?.nom || 'Membre'}</b>{p.partage_de && <span className="muted"> a partagé</span>}<div className="muted">{new Date(p.created_at).toLocaleString('fr-FR')}</div></div>
+              <div><Link className="lienmembre" href={'/membre/' + p.auteur}><b>{p.profiles?.nom || 'Membre'}</b></Link>{p.partage_de && <span className="muted"> a partagé</span>}<div className="muted">{new Date(p.created_at).toLocaleString('fr-FR')}</div></div>
             </div>
             {p.texte && <p className="texte">{p.texte}</p>}
             {p.image_url && <img className="photo" src={p.image_url} alt="Photo publiée" />}
@@ -117,7 +125,7 @@ export default function Fil({ user, groupId = null }) {
             <div className="actions">
               {!groupId && <button className="alt sm" onClick={() => partager(p)}>↗ Partager</button>}
               {p.auteur === user.id
-                ? <button className="alt sm droite" onClick={() => supprimer(p.id)}>Supprimer</button>
+                ? <><button className="alt sm droite" onClick={() => modifier(p)}>Modifier</button><button className="alt sm" onClick={() => supprimer(p.id)}>Supprimer</button></>
                 : <><button className="alt sm droite" onClick={() => signaler(p.id)}>Signaler</button><button className="alt sm" onClick={() => bloquer(p)}>Bloquer</button></>}
             </div>
             {coms.map(c => (

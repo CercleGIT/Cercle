@@ -35,6 +35,25 @@ function Bloques({ user }) {
   )
 }
 
+function Compte() {
+  const [info, setInfo] = useState('')
+  async function supprimer() {
+    const saisie = window.prompt('Action définitive : ton compte et tes publications seront supprimés. Tape SUPPRIMER pour confirmer.')
+    if (saisie !== 'SUPPRIMER') return
+    const { error } = await supabase.rpc('supprimer_mon_compte')
+    if (error) return setInfo('Suppression impossible.')
+    await supabase.auth.signOut()
+  }
+  return (
+    <div className="box">
+      <h2>Zone sensible</h2>
+      <p className="muted">Supprime définitivement ton compte et toutes tes données.</p>
+      <button className="alt sm" onClick={supprimer}>Supprimer mon compte</button>
+      {info && <p className="msg err" role="status">{info}</p>}
+    </div>
+  )
+}
+
 function Profil({ user }) {
   const [p, setP] = useState(null)
   const [info, setInfo] = useState('')
@@ -73,6 +92,7 @@ function Profil({ user }) {
         {info && <p className="msg ok" role="status">{info}</p>}
       </form>
       <Bloques user={user} />
+      <Compte />
       {admin && <div className="box"><h2>Administration</h2><Link className="btnlink" href="/moderation">Ouvrir la modération</Link></div>}
     </>
   )

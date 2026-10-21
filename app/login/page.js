@@ -34,6 +34,12 @@ export default function Login() {
     router.replace('/')
   }
 
+  async function oubli() {
+    if (!email) return setMsg({ err: 'Saisis ton e-mail ci-dessus, puis clique sur « Mot de passe oublié ».' })
+    const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin + '/reinitialiser' })
+    setMsg(error ? { err: 'Envoi impossible : ' + error.message } : { ok: 'Un e-mail de réinitialisation vient de t’être envoyé.' })
+  }
+
   async function google() {
     await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin } })
   }
@@ -50,6 +56,7 @@ export default function Login() {
         <input id="mdp" type="password" required value={mdp} onChange={e => setMdp(e.target.value)} autoComplete={inscription ? 'new-password' : 'current-password'} />
         <button disabled={charge}>{inscription ? 'Créer mon compte' : 'Se connecter'}</button>
         <button type="button" className="alt" onClick={google}>Continuer avec Google</button>
+        {!inscription && <button type="button" className="link" onClick={oubli}>Mot de passe oublié ?</button>}
         {msg && <p className={'msg ' + (msg.err ? 'err' : 'ok')} role="status">{msg.err || msg.ok}</p>}
         <button type="button" className="link" onClick={() => { setInscription(!inscription); setMsg(null) }}>
           {inscription ? 'J’ai déjà un compte' : 'Pas encore de compte ? Inscris-toi'}

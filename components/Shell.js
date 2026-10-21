@@ -24,6 +24,14 @@ export default function Shell({ children }) {
     return () => clearInterval(t)
   }, [user, path])
 
+  useEffect(() => {
+    if (!user) return
+    const ping = () => supabase.from('profiles').update({ derniere_activite: new Date().toISOString() }).eq('id', user.id)
+    ping()
+    const t = setInterval(ping, 60000)
+    return () => clearInterval(t)
+  }, [user])
+
   if (!user) return <div className="wrap">Chargement…</div>
   return (
     <>
