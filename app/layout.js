@@ -1,5 +1,6 @@
 import './globals.css'
 import EnregistrerSW from '@/components/EnregistrerSW'
+import PiedDePage from '@/components/PiedDePage'
 
 export const metadata = {
   title: 'Cercle',
@@ -14,6 +15,7 @@ export default function RootLayout({ children }) {
       <body>
         <EnregistrerSW />
         {children}
+        <PiedDePage />
       </body>
     </html>
   )

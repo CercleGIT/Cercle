@@ -99,3 +99,13 @@ button.sm, .sm { padding:6px 14px; font-size:14px; margin-top:0; width:auto; }
 .choix .barre { position:absolute; top:0; bottom:0; left:0; background:color-mix(in srgb, var(--brand) 20%, transparent); }
 .groupe-tete { display:flex; align-items:center; gap:14px; }
 .etiquette-role { background:var(--bg); border:1px solid var(--line); border-radius:8px; padding:0 8px; font-size:12px; color:var(--mute); }
+
+/* Pages légales */
+.pied { text-align:center; padding:20px 16px; font-size:13px; color:var(--mute); }
+.pied a { color:var(--mute); }
+.legal { max-width:720px; margin:0 auto; padding:20px 16px; }
+.legal h1 { font-size:26px; margin:14px 0 4px; }
+.legal h2 { font-size:18px; margin:24px 0 6px; }
+.legal p, .legal li { line-height:1.6; }
+.legal mark { background:#fde68a; color:#1f2937; padding:0 4px; border-radius:4px; }
+.legal .maj { color:var(--mute); font-size:13px; }

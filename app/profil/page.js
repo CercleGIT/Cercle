@@ -35,6 +35,40 @@ function Bloques({ user }) {
   )
 }
 
+function Donnees({ user }) {
+  const [info, setInfo] = useState('')
+  async function telecharger() {
+    setInfo('Préparation…')
+    const lire = async (table, col) => (await supabase.from(table).select('*').eq(col, user.id)).data || []
+    const donnees = {
+      exporte_le: new Date().toISOString(),
+      compte: { id: user.id, email: user.email },
+      profil: await lire('profiles', 'id'),
+      publications: await lire('posts', 'auteur'),
+      commentaires: await lire('comments', 'auteur'),
+      reactions: await lire('reactions', 'user_id'),
+      stories: await lire('stories', 'auteur'),
+      messages_envoyes: await lire('messages', 'expediteur'),
+      messages_recus: await lire('messages', 'destinataire'),
+      amities: (await supabase.from('friendships').select('*')).data || [],
+      evenements_crees: await lire('events', 'createur'),
+    }
+    const lien = document.createElement('a')
+    lien.href = URL.createObjectURL(new Blob([JSON.stringify(donnees, null, 2)], { type: 'application/json' }))
+    lien.download = 'mes-donnees-cercle.json'
+    lien.click()
+    setInfo('Téléchargement lancé.')
+  }
+  return (
+    <div className="box">
+      <h2>Mes données</h2>
+      <p className="muted">Télécharge une copie de toutes les données liées à ton compte.</p>
+      <button className="alt sm" onClick={telecharger}>Télécharger mes données</button>
+      {info && <p className="msg ok" role="status">{info}</p>}
+    </div>
+  )
+}
+
 function Compte() {
   const [info, setInfo] = useState('')
   async function supprimer() {
@@ -92,6 +126,7 @@ function Profil({ user }) {
         {info && <p className="msg ok" role="status">{info}</p>}
       </form>
       <Bloques user={user} />
+      <Donnees user={user} />
       <Compte />
       {admin && <div className="box"><h2>Administration</h2><Link className="btnlink" href="/moderation">Ouvrir la modération</Link></div>}
     </>

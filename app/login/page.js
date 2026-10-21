@@ -1,5 +1,6 @@
 'use client'
 import { useState } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import Logo from '@/components/Logo'
@@ -18,11 +19,13 @@ export default function Login() {
   const [mdp, setMdp] = useState('')
   const [msg, setMsg] = useState(null)
   const [charge, setCharge] = useState(false)
+  const [accepte, setAccepte] = useState(false)
 
   async function envoyer(e) {
     e.preventDefault()
     setMsg(null)
     if (inscription && nom.trim().length < 2) return setMsg({ err: 'Indique ton prénom.' })
+    if (inscription && !accepte) return setMsg({ err: 'Accepte les conditions d’utilisation pour créer ton compte.' })
     if (mdp.length < 8) return setMsg({ err: 'Le mot de passe doit contenir au moins 8 caractères.' })
     setCharge(true)
     const { data, error } = inscription
@@ -54,6 +57,12 @@ export default function Login() {
         <input id="email" type="email" required value={email} onChange={e => setEmail(e.target.value)} autoComplete="email" />
         <label htmlFor="mdp">Mot de passe</label>
         <input id="mdp" type="password" required value={mdp} onChange={e => setMdp(e.target.value)} autoComplete={inscription ? 'new-password' : 'current-password'} />
+        {inscription && (
+          <label className="check" style={{ marginTop: 12 }}>
+            <input type="checkbox" checked={accepte} onChange={e => setAccepte(e.target.checked)} />
+            <span>J’ai au moins 16 ans et j’accepte les <Link href="/cgu">conditions d’utilisation</Link> et la <Link href="/confidentialite">politique de confidentialité</Link>.</span>
+          </label>
+        )}
         <button disabled={charge}>{inscription ? 'Créer mon compte' : 'Se connecter'}</button>
         <button type="button" className="alt" onClick={google}>Continuer avec Google</button>
         {!inscription && <button type="button" className="link" onClick={oubli}>Mot de passe oublié ?</button>}
