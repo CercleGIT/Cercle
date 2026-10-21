@@ -5,9 +5,10 @@ import { supabase } from '@/lib/supabase'
 import { redimensionner } from '@/lib/image'
 import Avatar from '@/components/Avatar'
 import Stories from '@/components/Stories'
+import Texte from '@/components/Texte'
 
 const REACTIONS = [['coeur', '❤️'], ['rire', '😂'], ['wow', '😮'], ['triste', '😢'], ['pouce', '👍']]
-const SELECTION = 'id, texte, image_url, created_at, auteur, partage_de, profiles!auteur(nom, avatar_url), reactions(user_id, emoji), comments(id, texte, created_at, profiles(nom, avatar_url)), original:posts!partage_de(texte, image_url, profiles!auteur(nom))'
+const SELECTION = 'id, texte, image_url, created_at, auteur, partage_de, sondage, poll_votes(user_id, choix), profiles!auteur(nom, avatar_url), reactions(user_id, emoji), comments(id, texte, created_at, profiles(nom, avatar_url)), original:posts!partage_de(texte, image_url, profiles!auteur(nom))'
 
 function Commentaire({ postId, user, apres }) {
   const [t, setT] = useState('')
@@ -29,6 +30,7 @@ export default function Fil({ user, groupId = null }) {
   const [posts, setPosts] = useState([])
   const [texte, setTexte] = useState('')
   const [image, setImage] = useState(null)
+  const [sondage, setSondage] = useState(null)
   const [info, setInfo] = useState('')
 
   const charger = useCallback(async () => {
@@ -46,15 +48,23 @@ export default function Fil({ user, groupId = null }) {
   }
   async function publier(e) {
     e.preventDefault()
-    if (!texte.trim() && !image) return
-    const { error } = await supabase.from('posts').insert({ auteur: user.id, texte: texte.trim(), image_url: image, group_id: groupId })
+    const options = sondage ? sondage.map(o => o.trim()).filter(Boolean) : null
+    if (options && options.length < 2) return setInfo('Un sondage a besoin d’au moins 2 choix.')
+    if (!texte.trim() && !image && !options) return
+    const { error } = await supabase.from('posts').insert({ auteur: user.id, texte: texte.trim(), image_url: image, sondage: options, group_id: groupId })
     if (error) return setInfo('Publication impossible.')
-    setTexte(''); setImage(null); setInfo(''); charger()
+    setTexte(''); setImage(null); setSondage(null); setInfo(''); charger()
   }
   async function reagir(p, cle) {
     const ma = p.reactions.find(r => r.user_id === user.id)
     if (ma && ma.emoji === cle) await supabase.from('reactions').delete().match({ post_id: p.id, user_id: user.id })
     else await supabase.from('reactions').upsert({ post_id: p.id, user_id: user.id, emoji: cle })
+    charger()
+  }
+  async function voter(p, i) {
+    const mien = p.poll_votes.find(v => v.user_id === user.id)
+    if (mien && mien.choix === i) await supabase.from('poll_votes').delete().match({ post_id: p.id, user_id: user.id })
+    else await supabase.from('poll_votes').upsert({ post_id: p.id, user_id: user.id, choix: i })
     charger()
   }
   async function partager(p) {
@@ -91,8 +101,17 @@ export default function Fil({ user, groupId = null }) {
       <form className="box" onSubmit={publier}>
         <textarea rows={3} value={texte} onChange={e => setTexte(e.target.value)} placeholder="Quoi de neuf ?" aria-label="Nouvelle publication" />
         {image && <div className="apercu"><img className="photo" src={image} alt="Aperçu" /><button type="button" className="alt sm" onClick={() => setImage(null)}>Retirer la photo</button></div>}
+        {sondage && (
+          <div className="sondage">
+            {sondage.map((o, i) => (
+              <input key={i} value={o} maxLength={80} placeholder={'Choix ' + (i + 1)} aria-label={'Choix ' + (i + 1)} onChange={e => setSondage(sondage.map((x, k) => (k === i ? e.target.value : x)))} />
+            ))}
+            {sondage.length < 4 && <button type="button" className="alt sm" onClick={() => setSondage([...sondage, ''])}>+ Ajouter un choix</button>}
+          </div>
+        )}
         <div className="actions">
           <label className="alt sm bouton">📷 Photo<input type="file" accept="image/*" hidden onChange={choisir} /></label>
+          <button type="button" className="alt sm" onClick={() => setSondage(sondage ? null : ['', ''])}>📊 Sondage</button>
           <button>Publier</button>
         </div>
       </form>
@@ -107,12 +126,28 @@ export default function Fil({ user, groupId = null }) {
               <Avatar nom={p.profiles?.nom} url={p.profiles?.avatar_url} />
               <div><Link className="lienmembre" href={'/membre/' + p.auteur}><b>{p.profiles?.nom || 'Membre'}</b></Link>{p.partage_de && <span className="muted"> a partagé</span>}<div className="muted">{new Date(p.created_at).toLocaleString('fr-FR')}</div></div>
             </div>
-            {p.texte && <p className="texte">{p.texte}</p>}
+            {p.texte && <p className="texte"><Texte t={p.texte} /></p>}
             {p.image_url && <img className="photo" src={p.image_url} alt="Photo publiée" />}
             {p.partage_de && (
               <div className="partage">
                 {p.original ? (<><b>{p.original.profiles?.nom || 'Membre'}</b>{p.original.texte && <p className="texte">{p.original.texte}</p>}{p.original.image_url && <img className="photo" src={p.original.image_url} alt="Photo partagée" />}</>)
                   : <span className="muted">Publication indisponible.</span>}
+              </div>
+            )}
+            {p.sondage && (
+              <div className="sondage">
+                {p.sondage.map((o, i) => {
+                  const n = p.poll_votes.filter(v => v.choix === i).length
+                  const total = p.poll_votes.length || 1
+                  const mien = p.poll_votes.some(v => v.user_id === user.id && v.choix === i)
+                  return (
+                    <button type="button" key={i} className={'choix' + (mien ? ' moi' : '')} onClick={() => voter(p, i)}>
+                      <i className="barre" style={{ width: (100 * n / total) + '%' }} />
+                      <span>{o}</span><span>{n}</span>
+                    </button>
+                  )
+                })}
+                <span className="muted">{p.poll_votes.length} vote{p.poll_votes.length > 1 ? 's' : ''}</span>
               </div>
             )}
             <div className="bilan">
