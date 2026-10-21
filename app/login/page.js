@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import Logo from '@/components/Logo'
 
 const ERREURS = {
   'Invalid login credentials': 'E-mail ou mot de passe incorrect.',
@@ -28,7 +29,7 @@ export default function Login() {
       ? await supabase.auth.signUp({ email, password: mdp, options: { data: { nom: nom.trim() } } })
       : await supabase.auth.signInWithPassword({ email, password: mdp })
     setCharge(false)
-    if (error) return setMsg({ err: (ERREURS[error.message] || 'Une erreur est survenue.') + ' [' + error.message + ']' })
+    if (error) return setMsg({ err: ERREURS[error.message] || 'Une erreur est survenue : ' + error.message })
     if (inscription && !data.session) return setMsg({ ok: 'Compte créé. Vérifie ta boîte mail pour confirmer ton adresse.' })
     router.replace('/')
   }
@@ -40,8 +41,8 @@ export default function Login() {
   return (
     <div className="wrap">
       <form className="card" onSubmit={envoyer}>
-        <h1>Cercle</h1>
-        <p className="sub">{inscription ? 'Crée ton compte' : 'Connecte-toi pour retrouver tes amis'}</p>
+        <Logo taille={34} />
+        <p className="sub">{inscription ? 'Crée ton compte et retrouve tes amis' : 'Connecte-toi pour retrouver tes amis'}</p>
         {inscription && (<><label htmlFor="nom">Prénom</label><input id="nom" value={nom} onChange={e => setNom(e.target.value)} autoComplete="given-name" /></>)}
         <label htmlFor="email">E-mail</label>
         <input id="email" type="email" required value={email} onChange={e => setEmail(e.target.value)} autoComplete="email" />
