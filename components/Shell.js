@@ -6,7 +6,7 @@ import { supabase } from '@/lib/supabase'
 import { useUser } from '@/lib/useUser'
 import Logo from '@/components/Logo'
 
-const LIENS = [['/', 'Fil'], ['/amis', 'Amis'], ['/groupes', 'Groupes'], ['/messages', 'Messages'], ['/evenements', 'Événements'], ['/profil', 'Profil']]
+const LIENS = [['/', 'Fil'], ['/amis', 'Amis'], ['/groupes', 'Groupes'], ['/recherche', 'Recherche'], ['/messages', 'Messages'], ['/evenements', 'Événements'], ['/profil', 'Profil']]
 
 export default function Shell({ children }) {
   const user = useUser()

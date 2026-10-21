@@ -3,8 +3,10 @@ import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { redimensionner } from '@/lib/image'
 import Avatar from '@/components/Avatar'
+import Stories from '@/components/Stories'
 
-const SELECTION = 'id, texte, image_url, created_at, auteur, profiles!auteur(nom, avatar_url), likes(user_id), comments(id, texte, created_at, profiles(nom, avatar_url))'
+const REACTIONS = [['coeur', '❤️'], ['rire', '😂'], ['wow', '😮'], ['triste', '😢'], ['pouce', '👍']]
+const SELECTION = 'id, texte, image_url, created_at, auteur, partage_de, profiles!auteur(nom, avatar_url), reactions(user_id, emoji), comments(id, texte, created_at, profiles(nom, avatar_url)), original:posts!partage_de(texte, image_url, profiles!auteur(nom))'
 
 function Commentaire({ postId, user, apres }) {
   const [t, setT] = useState('')
@@ -48,10 +50,17 @@ export default function Fil({ user, groupId = null }) {
     if (error) return setInfo('Publication impossible.')
     setTexte(''); setImage(null); setInfo(''); charger()
   }
-  async function aimer(p) {
-    const aime = p.likes.some(l => l.user_id === user.id)
-    const q = supabase.from('likes')
-    await (aime ? q.delete().match({ post_id: p.id, user_id: user.id }) : q.insert({ post_id: p.id, user_id: user.id }))
+  async function reagir(p, cle) {
+    const ma = p.reactions.find(r => r.user_id === user.id)
+    if (ma && ma.emoji === cle) await supabase.from('reactions').delete().match({ post_id: p.id, user_id: user.id })
+    else await supabase.from('reactions').upsert({ post_id: p.id, user_id: user.id, emoji: cle })
+    charger()
+  }
+  async function partager(p) {
+    const t = window.prompt('Ajoute un commentaire (facultatif) :', '')
+    if (t === null) return
+    const { error } = await supabase.from('posts').insert({ auteur: user.id, texte: t.trim(), partage_de: p.partage_de || p.id })
+    setInfo(error ? 'Partage impossible.' : 'Publication partagée sur ton fil.')
     charger()
   }
   async function supprimer(id) { await supabase.from('posts').delete().eq('id', id); charger() }
@@ -62,6 +71,7 @@ export default function Fil({ user, groupId = null }) {
 
   return (
     <>
+      {!groupId && <Stories user={user} />}
       <form className="box" onSubmit={publier}>
         <textarea rows={3} value={texte} onChange={e => setTexte(e.target.value)} placeholder="Quoi de neuf ?" aria-label="Nouvelle publication" />
         {image && <div className="apercu"><img className="photo" src={image} alt="Aperçu" /><button type="button" className="alt sm" onClick={() => setImage(null)}>Retirer la photo</button></div>}
@@ -73,19 +83,31 @@ export default function Fil({ user, groupId = null }) {
       {info && <p className="msg err" role="status">{info}</p>}
       {!posts.length && <p className="muted">Aucune publication pour le moment.</p>}
       {posts.map(p => {
-        const aime = p.likes.some(l => l.user_id === user.id)
+        const ma = p.reactions.find(r => r.user_id === user.id)
         const coms = [...p.comments].sort((a, b) => a.created_at.localeCompare(b.created_at))
         return (
           <article className="box" key={p.id}>
             <div className="entete">
               <Avatar nom={p.profiles?.nom} url={p.profiles?.avatar_url} />
-              <div><b>{p.profiles?.nom || 'Membre'}</b><div className="muted">{new Date(p.created_at).toLocaleString('fr-FR')}</div></div>
+              <div><b>{p.profiles?.nom || 'Membre'}</b>{p.partage_de && <span className="muted"> a partagé</span>}<div className="muted">{new Date(p.created_at).toLocaleString('fr-FR')}</div></div>
             </div>
             {p.texte && <p className="texte">{p.texte}</p>}
             {p.image_url && <img className="photo" src={p.image_url} alt="Photo publiée" />}
+            {p.partage_de && (
+              <div className="partage">
+                {p.original ? (<><b>{p.original.profiles?.nom || 'Membre'}</b>{p.original.texte && <p className="texte">{p.original.texte}</p>}{p.original.image_url && <img className="photo" src={p.original.image_url} alt="Photo partagée" />}</>)
+                  : <span className="muted">Publication indisponible.</span>}
+              </div>
+            )}
+            <div className="bilan">
+              {REACTIONS.map(([k, e]) => { const n = p.reactions.filter(r => r.emoji === k).length; return n > 0 && <span key={k}>{e} {n}</span> })}
+              <span>{coms.length} commentaire{coms.length > 1 ? 's' : ''}</span>
+            </div>
+            <div className="reactions" role="group" aria-label="Réagir">
+              {REACTIONS.map(([k, e]) => <button key={k} className={ma?.emoji === k ? 'moi' : ''} onClick={() => reagir(p, k)} aria-label={'Réagir ' + k}>{e}</button>)}
+            </div>
             <div className="actions">
-              <button className="alt sm" onClick={() => aimer(p)}>{aime ? '♥' : '♡'} {p.likes.length}</button>
-              <span className="muted">{coms.length} commentaire{coms.length > 1 ? 's' : ''}</span>
+              {!groupId && <button className="alt sm" onClick={() => partager(p)}>↗ Partager</button>}
               {p.auteur === user.id
                 ? <button className="alt sm droite" onClick={() => supprimer(p.id)}>Supprimer</button>
                 : <button className="alt sm droite" onClick={() => signaler(p.id)}>Signaler</button>}
