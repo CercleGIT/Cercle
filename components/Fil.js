@@ -65,8 +65,16 @@ export default function Fil({ user, groupId = null }) {
   }
   async function supprimer(id) { await supabase.from('posts').delete().eq('id', id); charger() }
   async function signaler(id) {
-    const { error } = await supabase.from('reports').insert({ post_id: id, auteur: user.id, motif: 'signalement' })
-    setInfo(error ? 'Signalement impossible.' : 'Merci, la publication a été signalée.')
+    const motif = window.prompt('Pourquoi signales-tu cette publication ? (spam, harcèlement, contenu inapproprié, autre)', '')
+    if (motif === null) return
+    const { error } = await supabase.from('reports').insert({ post_id: id, auteur: user.id, motif: motif.trim() || 'non précisé' })
+    setInfo(!error ? 'Merci, la publication a été signalée.' : error.code === '23505' ? 'Tu as déjà signalé cette publication.' : 'Signalement impossible.')
+  }
+  async function bloquer(p) {
+    if (!window.confirm('Bloquer ' + (p.profiles?.nom || 'ce membre') + ' ? Vous ne verrez plus vos publications et ne pourrez plus vous écrire.')) return
+    const { error } = await supabase.from('blocks').insert({ blocker: user.id, blocked: p.auteur })
+    setInfo(error ? 'Blocage impossible.' : 'Membre bloqué.')
+    charger()
   }
 
   return (
@@ -110,7 +118,7 @@ export default function Fil({ user, groupId = null }) {
               {!groupId && <button className="alt sm" onClick={() => partager(p)}>↗ Partager</button>}
               {p.auteur === user.id
                 ? <button className="alt sm droite" onClick={() => supprimer(p.id)}>Supprimer</button>
-                : <button className="alt sm droite" onClick={() => signaler(p.id)}>Signaler</button>}
+                : <><button className="alt sm droite" onClick={() => signaler(p.id)}>Signaler</button><button className="alt sm" onClick={() => bloquer(p)}>Bloquer</button></>}
             </div>
             {coms.map(c => (
               <div className="com" key={c.id}>
