@@ -8,6 +8,19 @@ const STUN = [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:stun1.l.go
 // Serveurs TURN (relais) : facultatifs, utiles quand le Wi-Fi ou la 4G bloquent la connexion directe
 async function serveursIce() {
   const url = process.env.NEXT_PUBLIC_TURN_URL
+  const user = process.env.NEXT_PUBLIC_TURN_USER
+  const pass = process.env.NEXT_PUBLIC_TURN_PASS
+  if (user && pass) {
+    const relais = (urls) => ({ urls, username: user, credential: pass })
+    return [
+      { urls: 'stun:stun.relay.metered.ca:80' },
+      relais('turn:global.relay.metered.ca:80'),
+      relais('turn:global.relay.metered.ca:80?transport=tcp'),
+      relais('turn:global.relay.metered.ca:443'),
+      relais('turns:global.relay.metered.ca:443?transport=tcp'),
+      ...STUN,
+    ]
+  }
   if (!url) return STUN
   try {
     const liste = await (await fetch(url)).json()
@@ -23,6 +36,9 @@ export default function Appel({ user }) {
   const [micro, setMicro] = useState(true)
   const [camera, setCamera] = useState(true)
   const [erreur, setErreur] = useState('')
+  const [diag, setDiag] = useState('')
+  const [sonBloque, setSonBloque] = useState(false)
+  const stats = useRef({ env: 0, rec: 0 })
   const etatRef = useRef(null)
   const pc = useRef(null)
   const flux = useRef(null)
@@ -40,9 +56,14 @@ export default function Appel({ user }) {
 
   const majEtat = e => { etatRef.current = e; setEtat(e) }
   const attacher = () => {
-    if (videoLocale.current && flux.current) videoLocale.current.srcObject = flux.current
-    if (videoDistante.current && distant.current) videoDistante.current.srcObject = distant.current
+    if (videoLocale.current && flux.current && videoLocale.current.srcObject !== flux.current) videoLocale.current.srcObject = flux.current
+    const d = videoDistante.current
+    if (d && distant.current && d.srcObject !== distant.current) {
+      d.srcObject = distant.current
+      d.play().catch(() => setSonBloque(true))
+    }
   }
+  const majDiag = p => setDiag('Connexion : ' + p.connectionState + ' · ICE : ' + p.iceConnectionState + ' · échanges ' + stats.current.env + '/' + stats.current.rec + ' · ' + (process.env.NEXT_PUBLIC_TURN_USER ? 'relais configuré' : 'sans relais'))
   const envoyer = (type, payload) => supabase.from('appels').insert({ de: user.id, vers: pair.current, type, payload: { sid: sid.current, ...payload } })
 
   const terminer = useCallback(async (notifier = true) => {
@@ -53,6 +74,7 @@ export default function Appel({ user }) {
     if (pc.current) pc.current.close()
     if (flux.current) flux.current.getTracks().forEach(t => t.stop())
     pc.current = null; flux.current = null; distant.current = null
+    stats.current = { env: 0, rec: 0 }; setDiag(''); setSonBloque(false)
     sid.current = null; pair.current = null; offre.current = null; remoteSet.current = false
     majEtat(null); setDuree(0); setMicro(true); setCamera(true)
   }, [user.id])
@@ -64,9 +86,15 @@ export default function Appel({ user }) {
   async function creerPc() {
     const p = new RTCPeerConnection({ iceServers: await serveursIce() })
     flux.current.getTracks().forEach(t => p.addTrack(t, flux.current))
-    p.onicecandidate = e => { if (e.candidate) envoyer('ice', { c: e.candidate.toJSON() }) }
-    p.ontrack = e => { distant.current = e.streams[0]; attacher() }
+    p.onicecandidate = e => { if (e.candidate) { stats.current.env++; envoyer('ice', { c: e.candidate.toJSON() }); majDiag(p) } }
+    p.ontrack = e => {
+      if (!distant.current) distant.current = e.streams[0] || new MediaStream()
+      if (!e.streams[0]) distant.current.addTrack(e.track)
+      attacher(); majDiag(p)
+    }
+    p.oniceconnectionstatechange = () => majDiag(p)
     p.onconnectionstatechange = () => {
+      majDiag(p)
       if (p.connectionState === 'connected' && etatRef.current) majEtat({ ...etatRef.current, phase: 'encours' })
       if (p.connectionState === 'failed') { setErreur('La connexion a échoué.'); terminer(false) }
     }
@@ -135,6 +163,7 @@ export default function Appel({ user }) {
       majEtat({ phase: 'entrant', pair: r.de, nom: data?.nom || 'Un ami', avatar: data?.avatar_url, video: !!p.video })
       if (navigator.vibrate) navigator.vibrate([300, 150, 300])
     } else if (r.type === 'ice') {
+      stats.current.rec++
       if (sid.current === p.sid && pc.current && remoteSet.current) pc.current.addIceCandidate(p.c).catch(() => {})
       else (iceAttente.current[p.sid] = iceAttente.current[p.sid] || []).push(p.c)
     } else if (r.type === 'answer') {
@@ -196,6 +225,8 @@ export default function Appel({ user }) {
           <p className="appel-etat">
             {etat.phase === 'entrant' ? 'Appel ' + (etat.video ? 'vidéo' : 'vocal') + ' entrant…' : etat.phase === 'sortant' ? 'Appel en cours…' : formatDuree(duree)}
           </p>
+          {diag && <p className="appel-diag">{diag}</p>}
+          {sonBloque && <button className="alt sm" onClick={() => { videoDistante.current?.play(); setSonBloque(false) }}>🔊 Activer le son</button>}
           {etat.video && etat.phase !== 'entrant' && <video ref={videoLocale} autoPlay playsInline muted className="locale" />}
           <div className="appel-boutons">
             {etat.phase === 'entrant' ? (
