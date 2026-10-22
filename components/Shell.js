@@ -44,6 +44,7 @@ export default function Shell({ children }) {
           ))}
         </nav>
         <div className="outils">
+          <Link href="/parametres" className="cloche" aria-label="Paramètres">⚙️</Link>
           <Link href="/notifications" className="cloche" aria-label="Notifications">🔔{nb > 0 && <span className="pastille">{nb}</span>}</Link>
           <button className="plain" onClick={() => supabase.auth.signOut()}>Quitter</button>
         </div>
