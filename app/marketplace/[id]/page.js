@@ -40,6 +40,10 @@ function Annonce({ user }) {
   const statut = async s => { await supabase.from('annonces').update({ statut: s }).eq('id', a.id); charger() }
   const supprimer = async () => {
     if (!window.confirm('Supprimer définitivement cette annonce ?')) return
+    if (a.video_url && mienne) {
+      const c = a.video_url.split('/annonces-media/')[1]
+      if (c) await supabase.storage.from('annonces-media').remove([decodeURIComponent(c)])
+    }
     await supabase.from('annonces').delete().eq('id', a.id)
     router.push('/marketplace')
   }
@@ -60,6 +64,7 @@ function Annonce({ user }) {
             {images.length > 1 && <div className="minis">{images.map((im, k) => <button key={k} className={k === i ? 'actif' : ''} onClick={() => setI(k)} aria-label={'Photo ' + (k + 1)}><img src={im} alt="" /></button>)}</div>}
           </div>
         )}
+        {a.video_url && <video src={a.video_url} controls playsInline preload="metadata" className="video-annonce" />}
         {a.statut === 'vendue' && <p className="msg err"><b>Cette annonce est marquée comme vendue.</b></p>}
         <h2 style={{ marginTop: 12 }}>{a.titre}</h2>
         <div className="prix-grand">{formatPrix(a.prix, a.devise)}</div>

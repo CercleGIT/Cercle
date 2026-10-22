@@ -16,7 +16,7 @@ function Marche({ user }) {
   useEffect(() => {
     const t = setTimeout(async () => {
       let req = supabase.from('annonces')
-        .select('id, titre, prix, devise, ville, pays, categorie, statut, created_at, vignette').limit(60)
+        .select('id, titre, prix, devise, ville, pays, categorie, statut, created_at, vignette, video_url').limit(60)
       if (onglet === 'mes') req = req.eq('vendeur', user.id)
       else if (onglet === 'favoris') {
         const { data: f } = await supabase.from('favoris').select('annonce_id').eq('user_id', user.id)
@@ -73,6 +73,7 @@ function Marche({ user }) {
           <Link key={a.id} href={'/marketplace/' + a.id} className="carte">
             {a.vignette ? <img src={a.vignette} alt="" /> : <div className="sans-photo">🛍️</div>}
             {a.statut === 'vendue' && <span className="badge-vendue">Vendue</span>}
+            {a.video_url && <span className="badge-video">🎥</span>}
             <div className="infos">
               <div className="prix">{formatPrix(a.prix, a.devise)}</div>
               <div>{a.titre}</div>

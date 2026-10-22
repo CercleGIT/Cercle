@@ -10,10 +10,19 @@ function Nouvelle({ user }) {
   const router = useRouter()
   const [f, setF] = useState({ titre: '', categorie: '', prix: '', devise: 'EUR', pays: '', etat: '', ville: '', description: '' })
   const [photos, setPhotos] = useState([])
+  const [video, setVideo] = useState(null)
+  const [videoApercu, setVideoApercu] = useState('')
   const [erreur, setErreur] = useState('')
   const [envoi, setEnvoi] = useState(false)
   const maj = k => e => setF({ ...f, [k]: e.target.value })
 
+  function choisirVideo(e) {
+    const fic = e.target.files[0]
+    e.target.value = ''
+    if (!fic) return
+    if (fic.size > 50 * 1024 * 1024) return setErreur('La vidéo dépasse 50 Mo. Choisis une vidéo plus courte.')
+    setErreur(''); setVideo(fic); setVideoApercu(URL.createObjectURL(fic))
+  }
   async function ajouter(e) {
     const fichiers = [...e.target.files].slice(0, 4 - photos.length)
     const nouvelles = []
@@ -28,10 +37,18 @@ function Nouvelle({ user }) {
     if (!f.pays) return setErreur('Choisis le pays de vente.')
     if (f.prix !== '' && Number(f.prix) < 0) return setErreur('Le prix ne peut pas être négatif.')
     setEnvoi(true); setErreur('')
+    let videoUrl = null
+    if (video) {
+      const ext = (video.name.split('.').pop() || 'mp4').toLowerCase().replace(/[^a-z0-9]/g, '')
+      const chemin = user.id + '/' + Date.now() + '-' + Math.random().toString(36).slice(2) + '.' + ext
+      const { error: ev } = await supabase.storage.from('annonces-media').upload(chemin, video, { contentType: video.type || 'video/mp4' })
+      if (ev) { setEnvoi(false); return setErreur('Envoi de la vidéo impossible : ' + ev.message) }
+      videoUrl = supabase.storage.from('annonces-media').getPublicUrl(chemin).data.publicUrl
+    }
     const { data, error } = await supabase.from('annonces').insert({
       vendeur: user.id, titre: f.titre.trim(), description: f.description.trim(), categorie: f.categorie,
       prix: f.prix === '' ? null : Number(f.prix), devise: f.devise, pays: f.pays, etat: f.etat || null, ville: f.ville.trim() || null,
-      images: photos.map(p => p.grande), vignette: photos[0]?.mini || null,
+      images: photos.map(p => p.grande), vignette: photos[0]?.mini || null, video_url: videoUrl,
     }).select('id').single()
     setEnvoi(false)
     if (error) return setErreur('Publication impossible. Essaie avec moins ou de plus petites photos.')
@@ -73,10 +90,19 @@ function Nouvelle({ user }) {
         {photos.map((p, i) => (
           <button type="button" key={i} onClick={() => setPhotos(photos.filter((_, k) => k !== i))} aria-label="Retirer la photo"><img src={p.mini} alt="" /></button>
         ))}
-        {photos.length < 4 && <label className="alt sm bouton" style={{ alignSelf: 'center' }}>📷 Ajouter<input type="file" accept="image/*" multiple hidden onChange={ajouter} /></label>}
+        {photos.length < 4 && <label className="alt sm bouton" style={{ alignSelf: 'center' }}>📷 Ajouter des photos<input type="file" accept="image/*" multiple hidden onChange={ajouter} /></label>}
       </div>
       <p className="muted">Touche une photo pour la retirer. La première sert d’image principale.</p>
-      <button disabled={envoi}>{envoi ? 'Publication…' : 'Publier l’annonce'}</button>
+      <label>Vidéo (facultatif, 50 Mo maximum)</label>
+      {video ? (
+        <div>
+          <video src={videoApercu} controls playsInline className="video-annonce" />
+          <button type="button" className="alt sm" style={{ marginTop: 8 }} onClick={() => { setVideo(null); setVideoApercu('') }}>Retirer la vidéo</button>
+        </div>
+      ) : (
+        <label className="alt sm bouton">🎥 Ajouter une vidéo<input type="file" accept="video/*" hidden onChange={choisirVideo} /></label>
+      )}
+      <button disabled={envoi}>{envoi ? (video ? 'Envoi de la vidéo…' : 'Publication…') : 'Publier l’annonce'}</button>
       {erreur && <p className="msg err" role="status">{erreur}</p>}
     </form>
   )
