@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { useUser } from '@/lib/useUser'
 import Logo from '@/components/Logo'
+import Appel from '@/components/Appel'
 
 const LIENS = [['/', 'Fil'], ['/amis', 'Amis'], ['/groupes', 'Groupes'], ['/recherche', 'Recherche'], ['/messages', 'Messages'], ['/evenements', 'Événements'], ['/profil', 'Profil']]
 
@@ -47,6 +48,7 @@ export default function Shell({ children }) {
           <button className="plain" onClick={() => supabase.auth.signOut()}>Quitter</button>
         </div>
       </header>
+      <Appel user={user} />
       <main className="page">{children(user)}</main>
     </>
   )

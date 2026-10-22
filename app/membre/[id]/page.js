@@ -33,6 +33,8 @@ function Membre({ user }) {
     setInfo(error ? 'Blocage impossible.' : 'Membre bloqué.')
   }
 
+  const appeler = video => window.dispatchEvent(new CustomEvent('cercle-appel', { detail: { id, nom: p?.nom, avatar: p?.avatar_url, video } }))
+
   if (p === undefined) return <p className="muted">Chargement…</p>
   if (!p) return <p className="muted">Membre introuvable.</p>
   const moi = id === user.id
@@ -52,6 +54,7 @@ function Membre({ user }) {
           {!moi && !lien && <button className="sm" onClick={ajouter}>Ajouter</button>}
           {!moi && lien?.statut === 'en_attente' && <span className="muted">Demande en attente</span>}
           {!moi && lien?.statut === 'accepte' && <Link className="btnlink" href={'/messages?ami=' + id}>Écrire un message</Link>}
+          {!moi && lien?.statut === 'accepte' && <><button className="alt sm" onClick={() => appeler(false)}>📞 Vocal</button><button className="alt sm" onClick={() => appeler(true)}>🎥 Vidéo</button></>}
           {!moi && <button className="alt sm droite" onClick={bloquer}>Bloquer</button>}
         </div>
         {info && <p className="msg ok" role="status">{info}</p>}

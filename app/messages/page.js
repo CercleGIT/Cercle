@@ -8,6 +8,8 @@ import { redimensionner } from '@/lib/image'
 
 const enLigne = d => d && Date.now() - new Date(d).getTime() < 150000
 
+const appeler = (ami, video) => window.dispatchEvent(new CustomEvent('cercle-appel', { detail: { id: ami.id, nom: ami.nom, avatar: ami.avatar_url, video } }))
+
 function Messages({ user }) {
   const [amis, setAmis] = useState([])
   const [nonLus, setNonLus] = useState({})
@@ -80,6 +82,12 @@ function Messages({ user }) {
           </button>
         ))}
       </div>
+      {actif && (
+        <div className="actions" style={{ marginTop: 10 }}>
+          <button className="alt sm" onClick={() => appeler(actif, false)}>📞 Appel vocal</button>
+          <button className="alt sm" onClick={() => appeler(actif, true)}>🎥 Appel vidéo</button>
+        </div>
+      )}
       <div className="conv" ref={liste}>
         {!fil.length && <p className="muted">Aucun message. Écris le premier.</p>}
         {fil.map(m => (
