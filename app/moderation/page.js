@@ -3,6 +3,40 @@ import { useCallback, useEffect, useState } from 'react'
 import Shell from '@/components/Shell'
 import { supabase } from '@/lib/supabase'
 
+function AnnoncesSignalees() {
+  const [liste, setListe] = useState([])
+  const charger = useCallback(async () => {
+    const { data } = await supabase.from('annonce_reports')
+      .select('id, motif, created_at, annonce_id, reporter:profiles!auteur(nom), annonces(id, titre, prix, devise, vignette)')
+      .order('created_at', { ascending: false }).limit(50)
+    setListe(data || [])
+  }, [])
+  useEffect(() => { charger() }, [charger])
+  async function supprimerAnnonce(id) {
+    if (!window.confirm('Supprimer définitivement cette annonce ?')) return
+    await supabase.from('annonces').delete().eq('id', id)
+    charger()
+  }
+  async function ignorer(id) { await supabase.from('annonce_reports').delete().eq('id', id); charger() }
+  return (
+    <>
+      <h2 style={{ marginTop: 24 }}>Annonces signalées ({liste.length})</h2>
+      {!liste.length && <p className="muted">Aucune annonce signalée.</p>}
+      {liste.map(r => (
+        <div className="box" key={r.id}>
+          <div className="muted">Signalée par {r.reporter?.nom || 'un membre'} · {new Date(r.created_at).toLocaleString('fr-FR')}</div>
+          <p><b>Motif :</b> {r.motif}</p>
+          {r.annonces ? <div className="partage"><b>{r.annonces.titre}</b>{r.annonces.vignette && <img className="photo" src={r.annonces.vignette} alt="" style={{ maxWidth: 180 }} />}</div> : <p className="muted">Annonce introuvable.</p>}
+          <div className="actions">
+            <button className="sm" onClick={() => supprimerAnnonce(r.annonce_id)}>Supprimer l’annonce</button>
+            <button className="alt sm" onClick={() => ignorer(r.id)}>Ignorer</button>
+          </div>
+        </div>
+      ))}
+    </>
+  )
+}
+
 function Moderation({ user }) {
   const [admin, setAdmin] = useState(null)
   const [liste, setListe] = useState([])
@@ -51,6 +85,7 @@ function Moderation({ user }) {
           </div>
         </div>
       ))}
+      <AnnoncesSignalees />
     </>
   )
 }

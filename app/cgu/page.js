@@ -33,6 +33,9 @@ export default function Page() {
       <h2>7. Responsabilité</h2>
       <p>Le service est fourni « en l’état », sans garantie de disponibilité permanente. L’éditeur n’est pas responsable des contenus publiés par les membres, mais agit pour retirer promptement ceux qui lui sont signalés comme illicites.</p>
 
+      <h2>Annonces et ventes entre membres (Cercle Marketplace)</h2>
+      <p>Les membres peuvent publier des annonces. Cercle met seulement en relation vendeurs et acheteurs : Cercle n’est pas partie à la vente, ne garantit pas les objets ou services proposés et n’intervient pas dans les paiements. Il est interdit de proposer des armes, des drogues, des produits contrefaits ou volés, des animaux protégés, des contenus à caractère sexuel ou tout objet dont la vente est illégale. Les annonces trompeuses ou frauduleuses seront supprimées et les comptes concernés pourront être suspendus.</p>
+
       <h2>8. Modification des conditions</h2>
       <p>Ces conditions peuvent évoluer. En cas de changement important, les membres en seront informés sur le site.</p>
 

@@ -19,14 +19,23 @@ function Messages({ user }) {
   const [photo, setPhoto] = useState(null)
   const [vide, setVide] = useState(false)
   const liste = useRef(null)
+  useEffect(() => {
+    const sujet = new URLSearchParams(window.location.search).get('sujet')
+    if (sujet) setTexte('Bonjour, ton annonce « ' + sujet.slice(0, 120) + ' » est-elle toujours disponible ?')
+  }, [])
 
   const chargerAmis = useCallback(async () => {
+    const voulu = new URLSearchParams(window.location.search).get('ami')
     const { data: l } = await supabase.from('friendships').select('demandeur, destinataire').eq('statut', 'accepte')
-    const ids = (l || []).map(x => (x.demandeur === user.id ? x.destinataire : x.demandeur))
+    const { data: ms } = await supabase.from('messages').select('expediteur, destinataire').order('created_at', { ascending: false }).limit(300)
+    const ids = [...new Set([
+      ...(l || []).map(x => (x.demandeur === user.id ? x.destinataire : x.demandeur)),
+      ...(ms || []).map(x => (x.expediteur === user.id ? x.destinataire : x.expediteur)),
+      ...(voulu && voulu !== user.id ? [voulu] : []),
+    ])]
     if (!ids.length) return setVide(true)
     const { data: ps } = await supabase.from('profiles').select('id, nom, avatar_url, derniere_activite').in('id', ids)
     setAmis(ps || [])
-    const voulu = new URLSearchParams(window.location.search).get('ami')
     setActif(a => a || (ps || []).find(p => p.id === voulu) || (ps || [])[0] || null)
     const { data: nl } = await supabase.from('messages').select('expediteur').eq('destinataire', user.id).eq('lu', false)
     const c = {}
