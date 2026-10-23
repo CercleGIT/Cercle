@@ -83,7 +83,7 @@ function Participations({ user, defi, admin, termine }) {
         return (
           <div className="partage" key={p.id} style={{ marginTop: 10 }}>
             <div className="entete">
-              <Avatar nom={p.profiles?.nom} url={p.profiles?.avatar_url} taille={34} />
+              <Avatar nom={p.profiles?.nom} url={p.profiles?.avatar_url} taille={34} id={p.auteur} />
               <div>
                 <Link className="lienmembre" href={'/membre/' + p.auteur}><b>{p.profiles?.nom || 'Membre'}</b></Link>
                 {termine && i === 0 && <span> 👑 Gagnant</span>}

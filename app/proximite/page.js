@@ -121,7 +121,7 @@ function Proximite({ user }) {
             const l = lien(m.id)
             return (
               <div className="resultat" key={m.id}>
-                <Avatar nom={m.nom} url={m.avatar_url} />
+                <Avatar nom={m.nom} url={m.avatar_url} id={m.id} />
                 <div><Link className="lienmembre" href={'/membre/' + m.id}><b>{m.nom}</b></Link><div className="muted">à moins de {m.distance_km} km</div></div>
                 {l ? <span className="muted">{l.statut === 'accepte' ? 'Ami' : 'En attente'}</span> : <button className="sm" onClick={() => ajouter(m.id)}>Ajouter</button>}
               </div>

@@ -44,7 +44,7 @@ function Suggestions({ user, apres }) {
       <h2>Personnes que tu pourrais connaître</h2>
       {visibles.map(s => (
         <div className="resultat" key={s.id}>
-          <Avatar nom={s.nom} url={s.avatar_url} />
+          <Avatar nom={s.nom} url={s.avatar_url} id={s.id} />
           <div>
             <Link className="lienmembre" href={'/membre/' + s.id}><b>{s.nom}</b></Link>{s.verifie && <Verifie />}
             <div className="muted">{raisons(s)}</div>

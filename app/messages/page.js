@@ -5,6 +5,7 @@ import Shell from '@/components/Shell'
 import Avatar from '@/components/Avatar'
 import { jouer } from '@/lib/sons'
 import Verifie from '@/components/Verifie'
+import MessageVocal from '@/components/MessageVocal'
 import { supabase } from '@/lib/supabase'
 import { redimensionner } from '@/lib/image'
 
@@ -22,6 +23,15 @@ function Messages({ user }) {
   const [vide, setVide] = useState(false)
   const liste = useRef(null)
   const dernierEntrant = useRef(null)
+  const [enregistre, setEnregistre] = useState(false)
+  const [duree, setDuree] = useState(0)
+  const [erreurVocal, setErreurVocal] = useState('')
+  const enregistreur = useRef(null)
+  const morceaux = useRef([])
+  const annule = useRef(false)
+  const debut = useRef(0)
+  const dureeRef = useRef(0)
+  const minuteur = useRef(null)
   useEffect(() => {
     const sujet = new URLSearchParams(window.location.search).get('sujet')
     if (sujet) setTexte('Bonjour, ton annonce « ' + sujet.slice(0, 120) + ' » est-elle toujours disponible ?')
@@ -55,7 +65,7 @@ function Messages({ user }) {
 
   const charger = useCallback(async () => {
     if (!actif) return
-    const { data } = await supabase.from('messages').select('id, expediteur, texte, image_url, lu, created_at')
+    const { data } = await supabase.from('messages').select('id, expediteur, texte, image_url, audio_path, audio_duree, lu, created_at')
       .or(`and(expediteur.eq.${user.id},destinataire.eq.${actif.id}),and(expediteur.eq.${actif.id},destinataire.eq.${user.id})`)
       .order('created_at', { ascending: true }).limit(200)
     setFil(data || [])
@@ -74,6 +84,61 @@ function Messages({ user }) {
     return () => clearInterval(t)
   }, [charger])
   useEffect(() => { if (liste.current) liste.current.scrollTop = liste.current.scrollHeight }, [fil])
+
+  useEffect(() => () => {
+    clearInterval(minuteur.current)
+    annule.current = true
+    if (enregistreur.current && enregistreur.current.state !== 'inactive') enregistreur.current.stop()
+  }, [])
+
+  async function envoyerVocal(blob, secondes, destinataire) {
+    const type = (blob.type || 'audio/webm').split(';')[0]
+    const ext = type.includes('mp4') ? 'm4a' : type.includes('ogg') ? 'ogg' : 'webm'
+    const chemin = user.id + '/' + Date.now() + '.' + ext
+    const { error } = await supabase.storage.from('vocaux').upload(chemin, blob, { contentType: type })
+    if (error) return setErreurVocal('Envoi du message vocal impossible : ' + error.message)
+    const { error: e2 } = await supabase.from('messages').insert({ expediteur: user.id, destinataire, texte: '', audio_path: chemin, audio_duree: Math.max(1, secondes) })
+    if (e2) return setErreurVocal('Envoi du message vocal impossible.')
+    charger()
+  }
+  async function demarrerVocal() {
+    if (!actif || enregistre) return
+    setErreurVocal('')
+    try {
+      const flux = await navigator.mediaDevices.getUserMedia({ audio: true })
+      const types = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/ogg;codecs=opus']
+      const type = window.MediaRecorder ? types.find(t => MediaRecorder.isTypeSupported(t)) : null
+      const rec = new MediaRecorder(flux, type ? { mimeType: type } : undefined)
+      const cible = actif.id
+      morceaux.current = []
+      annule.current = false
+      rec.ondataavailable = e => { if (e.data.size) morceaux.current.push(e.data) }
+      rec.onstop = () => {
+        flux.getTracks().forEach(t => t.stop())
+        const blob = new Blob(morceaux.current, { type: rec.mimeType || type || 'audio/webm' })
+        if (!annule.current && blob.size > 0 && dureeRef.current >= 1) envoyerVocal(blob, dureeRef.current, cible)
+      }
+      debut.current = Date.now(); dureeRef.current = 0
+      rec.start()
+      enregistreur.current = rec
+      setEnregistre(true); setDuree(0)
+      minuteur.current = setInterval(() => {
+        const s = Math.round((Date.now() - debut.current) / 1000)
+        setDuree(s)
+        if (s >= 120) arreterVocal(true)
+      }, 500)
+    } catch (e) {
+      setErreurVocal('Autorise le micro pour enregistrer un message vocal.')
+    }
+  }
+  function arreterVocal(envoyer) {
+    clearInterval(minuteur.current)
+    dureeRef.current = Math.round((Date.now() - debut.current) / 1000)
+    annule.current = !envoyer
+    if (enregistreur.current && enregistreur.current.state !== 'inactive') enregistreur.current.stop()
+    setEnregistre(false); setDuree(0)
+  }
+  const mmss = s => String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0')
 
   async function choisir(e) {
     const f = e.target.files[0]
@@ -111,14 +176,25 @@ function Messages({ user }) {
         {fil.map(m => (
           <div key={m.id} className={'msgb ' + (m.expediteur === user.id ? 'moi' : '')}>
             {m.image_url && <img src={m.image_url} alt="Photo envoyée" />}
+            {m.audio_path && <MessageVocal chemin={m.audio_path} />}
             {m.texte}
           </div>
         ))}
         {dernierMien?.lu && <span className="vu">Vu</span>}
       </div>
       {photo && <div className="apercu"><img className="photo" style={{ maxHeight: 160, width: 'auto' }} src={photo} alt="Aperçu" /><button type="button" className="alt sm" onClick={() => setPhoto(null)}>Retirer la photo</button></div>}
+      {erreurVocal && <p className="msg err" role="status">{erreurVocal}</p>}
       <form className="saisie" onSubmit={envoyer}>
         <label className="alt sm bouton" aria-label="Joindre une photo">📷<input type="file" accept="image/*" hidden onChange={choisir} /></label>
+        {enregistre ? (
+          <>
+            <span className="rec"><span className="rec-point" /> {mmss(duree)}</span>
+            <button type="button" className="sm" onClick={() => arreterVocal(true)} aria-label="Envoyer le message vocal">➤ Envoyer</button>
+            <button type="button" className="alt sm" onClick={() => arreterVocal(false)} aria-label="Annuler">✕</button>
+          </>
+        ) : (
+          <button type="button" className="alt sm" onClick={demarrerVocal} aria-label="Enregistrer un message vocal">🎤</button>
+        )}
         <input value={texte} onChange={e => setTexte(e.target.value)} placeholder="Écrire un message" aria-label="Message" />
         <button className="sm">Envoyer</button>
       </form>

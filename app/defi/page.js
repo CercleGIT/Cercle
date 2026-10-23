@@ -130,7 +130,7 @@ function Defi({ user }) {
         return (
           <article className="box" key={p.id}>
             <div className="entete">
-              <Avatar nom={p.profiles?.nom} url={p.profiles?.avatar_url} />
+              <Avatar nom={p.profiles?.nom} url={p.profiles?.avatar_url} id={p.auteur} />
               <div>
                 <Link className="lienmembre" href={'/membre/' + p.auteur}><b>{p.profiles?.nom || 'Membre'}</b></Link>
                 {onglet === 'hier' && i === 0 && <span> 👑 Gagnant</span>}

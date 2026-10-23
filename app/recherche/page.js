@@ -1,4 +1,5 @@
 'use client'
+import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import Shell from '@/components/Shell'
 import Avatar from '@/components/Avatar'
@@ -22,7 +23,7 @@ function Recherche({ user }) {
       const motif = `%${mot.replace(/[%_,()]/g, ' ')}%`
       const [m, p] = await Promise.all([
         supabase.from('profiles').select('id, nom, bio, avatar_url, verifie').ilike('nom', motif).neq('id', user.id).limit(10),
-        supabase.from('posts').select('id, texte, created_at, profiles!auteur(nom, avatar_url)').ilike('texte', motif).is('group_id', null).order('created_at', { ascending: false }).limit(20),
+        supabase.from('posts').select('id, texte, created_at, auteur, profiles!auteur(nom, avatar_url)').ilike('texte', motif).is('group_id', null).order('created_at', { ascending: false }).limit(20),
       ])
       setMembres(m.data || []); setPosts(p.data || []); setFait(true)
     }, 300)
@@ -49,8 +50,8 @@ function Recherche({ user }) {
             const l = lien(m.id)
             return (
               <div className="resultat" key={m.id}>
-                <Avatar nom={m.nom} url={m.avatar_url} />
-                <div><b>{m.nom}</b>{m.verifie && <Verifie />}{m.bio && <div className="muted">{m.bio}</div>}</div>
+                <Avatar nom={m.nom} url={m.avatar_url} id={m.id} />
+                <div><Link className="lienmembre" href={'/membre/' + m.id}><b>{m.nom}</b></Link>{m.verifie && <Verifie />}{m.bio && <div className="muted">{m.bio}</div>}</div>
                 {l ? <span className="muted">{l.statut === 'accepte' ? 'Ami' : 'En attente'}</span> : <button className="sm" onClick={() => ajouter(m.id)}>Ajouter</button>}
               </div>
             )
@@ -62,8 +63,8 @@ function Recherche({ user }) {
           <h2>Publications</h2>
           {posts.map(p => (
             <div className="resultat" key={p.id}>
-              <Avatar nom={p.profiles?.nom} url={p.profiles?.avatar_url} />
-              <div><b>{p.profiles?.nom || 'Membre'}</b><div>{p.texte}</div><div className="muted">{new Date(p.created_at).toLocaleString('fr-FR')}</div></div>
+              <Avatar nom={p.profiles?.nom} url={p.profiles?.avatar_url} id={p.auteur} />
+              <div><Link className="lienmembre" href={'/membre/' + p.auteur}><b>{p.profiles?.nom || 'Membre'}</b></Link><div>{p.texte}</div><div className="muted">{new Date(p.created_at).toLocaleString('fr-FR')}</div></div>
             </div>
           ))}
         </div>

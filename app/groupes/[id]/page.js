@@ -124,7 +124,7 @@ function Groupe({ user }) {
                 <h2>Membres</h2>
                 {membres.map(m => (
                   <div className="resultat" key={m.user_id}>
-                    <Avatar nom={m.profiles?.nom} url={m.profiles?.avatar_url} taille={36} />
+                    <Avatar nom={m.profiles?.nom} url={m.profiles?.avatar_url} taille={36} id={m.user_id} />
                     <div><Link className="lienmembre" href={'/membre/' + m.user_id}><b>{m.profiles?.nom || 'Membre'}</b></Link>{m.profiles?.verifie && <Verifie />} {m.role === 'admin' && <span className="etiquette-role">admin</span>}</div>
                     {admin && m.user_id !== user.id && m.role !== 'admin' && <button className="alt sm" onClick={() => promouvoir(m.user_id)}>Nommer admin</button>}
                     {admin && m.user_id !== user.id && <button className="alt sm" onClick={() => retirer(m.user_id)}>Retirer</button>}
@@ -136,7 +136,7 @@ function Groupe({ user }) {
                 {!candidats.length && <p className="muted">Aucun ami à inviter pour le moment.</p>}
                 {candidats.map(a => (
                   <div className="resultat" key={a.id}>
-                    <Avatar nom={a.nom} url={a.avatar_url} taille={36} />
+                    <Avatar nom={a.nom} url={a.avatar_url} taille={36} id={a.id} />
                     <div>{a.nom}</div>
                     <button className="sm" onClick={() => inviter(a.id)}>Inviter</button>
                   </div>
