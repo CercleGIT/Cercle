@@ -4,6 +4,7 @@ import { useParams, useRouter } from 'next/navigation'
 import { useCallback, useEffect, useState } from 'react'
 import Shell from '@/components/Shell'
 import Fil from '@/components/Fil'
+import DefisGroupe from '@/components/DefisGroupe'
 import Avatar from '@/components/Avatar'
 import Verifie from '@/components/Verifie'
 import { supabase } from '@/lib/supabase'
@@ -113,8 +114,10 @@ function Groupe({ user }) {
           <div className="onglets" style={{ marginBottom: 12 }}>
             <button className={onglet === 'fil' ? '' : 'alt'} onClick={() => setOnglet('fil')}>Publications</button>
             <button className={onglet === 'membres' ? '' : 'alt'} onClick={() => setOnglet('membres')}>Membres ({membres.length})</button>
+            <button className={onglet === 'defis' ? '' : 'alt'} onClick={() => setOnglet('defis')}>🔥 Défis</button>
           </div>
           {onglet === 'fil' && <Fil user={user} groupId={gid} />}
+          {onglet === 'defis' && <DefisGroupe user={user} gid={gid} admin={admin} />}
           {onglet === 'membres' && (
             <>
               <div className="box">
