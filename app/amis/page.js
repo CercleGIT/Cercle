@@ -1,7 +1,62 @@
 'use client'
 import { useCallback, useEffect, useState } from 'react'
+import Link from 'next/link'
 import Shell from '@/components/Shell'
+import Avatar from '@/components/Avatar'
+import Verifie from '@/components/Verifie'
 import { supabase } from '@/lib/supabase'
+
+const raisons = s => [
+  s.amis_communs > 0 && s.amis_communs + ' ami' + (s.amis_communs > 1 ? 's' : '') + ' en commun',
+  s.groupes_communs > 0 && s.groupes_communs + ' groupe' + (s.groupes_communs > 1 ? 's' : '') + ' en commun',
+  s.distance_km && 'à moins de ' + s.distance_km + ' km',
+].filter(Boolean).join(' · ')
+
+function Suggestions({ user, apres }) {
+  const [liste, setListe] = useState(null)
+  const [masques, setMasques] = useState([])
+  const [info, setInfo] = useState('')
+
+  const charger = useCallback(async () => {
+    const { data } = await supabase.rpc('suggestions_amis', { max_resultats: 20 })
+    setListe(data || [])
+  }, [])
+  useEffect(() => {
+    charger()
+    try { setMasques(JSON.parse(localStorage.getItem('cercle-sugg-masquees') || '[]')) } catch {}
+  }, [charger])
+
+  async function ajouter(id) {
+    const { error } = await supabase.from('friendships').insert({ demandeur: user.id, destinataire: id })
+    setInfo(error ? 'Demande impossible.' : 'Demande envoyée.')
+    charger(); apres()
+  }
+  function masquer(id) {
+    const m = [...masques, id]
+    setMasques(m)
+    try { localStorage.setItem('cercle-sugg-masquees', JSON.stringify(m)) } catch {}
+  }
+
+  const visibles = (liste || []).filter(s => !masques.includes(s.id))
+  if (!visibles.length) return null
+  return (
+    <section className="box">
+      <h2>Personnes que tu pourrais connaître</h2>
+      {visibles.map(s => (
+        <div className="resultat" key={s.id}>
+          <Avatar nom={s.nom} url={s.avatar_url} />
+          <div>
+            <Link className="lienmembre" href={'/membre/' + s.id}><b>{s.nom}</b></Link>{s.verifie && <Verifie />}
+            <div className="muted">{raisons(s)}</div>
+          </div>
+          <button className="sm" onClick={() => ajouter(s.id)}>Ajouter</button>
+          <button className="alt sm" onClick={() => masquer(s.id)} aria-label="Masquer cette suggestion">✕</button>
+        </div>
+      ))}
+      {info && <p className="msg ok" role="status">{info}</p>}
+    </section>
+  )
+}
 
 function Amis({ user }) {
   const [liens, setLiens] = useState([])      // amitiés me concernant
@@ -44,6 +99,7 @@ function Amis({ user }) {
 
   return (
     <>
+      <Suggestions user={user} apres={charger} />
       <section className="box">
         <h2>Trouver des amis</h2>
         <input value={recherche} onChange={chercher} placeholder="Rechercher par prénom" aria-label="Rechercher un membre" />
