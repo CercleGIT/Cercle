@@ -109,7 +109,7 @@ function Profil({ user }) {
       </form>
       <Bloques user={user} />
       <Donnees user={user} />
-      {admin && <div className="box"><h2>Administration</h2><Link className="btnlink" href="/moderation">Ouvrir la modération</Link></div>}
+      {admin && <div className="box"><h2>Administration</h2><div className="actions"><Link className="btnlink" href="/moderation">Ouvrir la modération</Link><Link className="btnlink" href="/admin">Tableau de bord</Link></div></div>}
     </>
   )
 }

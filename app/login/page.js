@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
@@ -19,6 +19,10 @@ export default function Login() {
   const [mdp, setMdp] = useState('')
   const [msg, setMsg] = useState(null)
   const [charge, setCharge] = useState(false)
+  useEffect(() => {
+    const ref = new URLSearchParams(window.location.search).get('ref')
+    if (ref) { try { localStorage.setItem('cercle-ref', ref) } catch {} setInscription(true) }
+  }, [])
   const [accepte, setAccepte] = useState(false)
 
   async function envoyer(e) {
@@ -34,6 +38,8 @@ export default function Login() {
     setCharge(false)
     if (error) return setMsg({ err: ERREURS[error.message] || 'Une erreur est survenue : ' + error.message })
     if (inscription && !data.session) return setMsg({ ok: 'Compte créé. Vérifie ta boîte mail pour confirmer ton adresse.' })
+    const ref = localStorage.getItem('cercle-ref')
+    if (ref) { await supabase.rpc('enregistrer_parrain', { parrain_id: ref }); localStorage.removeItem('cercle-ref') }
     router.replace('/')
   }
 

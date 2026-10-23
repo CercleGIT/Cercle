@@ -57,6 +57,11 @@ function Parametres({ user }) {
       </div>
 
       <div className="box">
+        <h2>Inviter des amis</h2>
+        <Link className="lien-ligne" href="/inviter"><span>Partager mon lien d’invitation et voir mes invités</span><span>›</span></Link>
+      </div>
+
+      <div className="box">
         <h2>Apparence</h2>
         <div className="onglets">
           {THEMES.map(([k, n]) => (
