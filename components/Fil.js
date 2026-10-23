@@ -6,6 +6,7 @@ import { redimensionner } from '@/lib/image'
 import Avatar from '@/components/Avatar'
 import Stories from '@/components/Stories'
 import Texte from '@/components/Texte'
+import BandeauDefi from '@/components/BandeauDefi'
 import Verifie from '@/components/Verifie'
 
 const REACTIONS = [['coeur', '❤️'], ['rire', '😂'], ['wow', '😮'], ['triste', '😢'], ['pouce', '👍']]
@@ -99,6 +100,7 @@ export default function Fil({ user, groupId = null }) {
   return (
     <>
       {!groupId && <Stories user={user} />}
+      {!groupId && <BandeauDefi />}
       <form className="box" onSubmit={publier}>
         <textarea rows={3} value={texte} onChange={e => setTexte(e.target.value)} placeholder="Quoi de neuf ?" aria-label="Nouvelle publication" />
         {image && <div className="apercu"><img className="photo" src={image} alt="Aperçu" /><button type="button" className="alt sm" onClick={() => setImage(null)}>Retirer la photo</button></div>}
