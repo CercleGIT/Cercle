@@ -7,7 +7,7 @@ import { useUser } from '@/lib/useUser'
 import Logo from '@/components/Logo'
 import Appel from '@/components/Appel'
 
-const LIENS = [['/', 'Fil'], ['/defi', '🔥 Défi'], ['/amis', 'Amis'], ['/groupes', 'Groupes'], ['/recherche', 'Recherche'], ['/proximite', 'À proximité'], ['/marketplace', 'Marché'], ['/messages', 'Messages'], ['/evenements', 'Événements'], ['/profil', 'Profil']]
+const LIENS = [['/', 'Fil'], ['/defi', '🔥 Défi'], ['/createurs', 'Créateurs'], ['/amis', 'Amis'], ['/groupes', 'Groupes'], ['/recherche', 'Recherche'], ['/proximite', 'À proximité'], ['/marketplace', 'Marché'], ['/messages', 'Messages'], ['/evenements', 'Événements'], ['/profil', 'Profil']]
 
 export default function Shell({ children }) {
   const user = useUser()

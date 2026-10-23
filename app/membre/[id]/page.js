@@ -14,12 +14,15 @@ function Membre({ user }) {
   const [posts, setPosts] = useState([])
   const [info, setInfo] = useState('')
   const [admin, setAdmin] = useState(false)
+  const [createur, setCreateur] = useState(null)
 
   const charger = useCallback(async () => {
     const { data } = await supabase.from('profiles').select('id, nom, bio, avatar_url, derniere_activite, verifie').eq('id', id).maybeSingle()
     setP(data)
     const { data: l } = await supabase.from('friendships').select('demandeur, destinataire, statut')
     setLien((l || []).find(x => [x.demandeur, x.destinataire].includes(id)) || null)
+    const { data: cr } = await supabase.from('createurs').select('activite').eq('user_id', id).eq('actif', true).maybeSingle()
+    setCreateur(cr)
     const { data: ps } = await supabase.from('posts').select('id, texte, image_url, created_at').eq('auteur', id).is('group_id', null).order('created_at', { ascending: false }).limit(20)
     setPosts(ps || [])
   }, [id])
@@ -57,6 +60,7 @@ function Membre({ user }) {
           <div>
             <h2 style={{ margin: 0 }}>{p.nom} {p.verifie && <Verifie />} {enLigne && <span className="point" title="En ligne" />}</h2>
             {p.bio && <p className="texte">{p.bio}</p>}
+            {createur && <Link className="etiquette" href={'/createurs/' + id}>🎨 Créateur : {createur.activite} →</Link>}
           </div>
         </div>
         <div className="actions">

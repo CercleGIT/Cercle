@@ -15,6 +15,7 @@ export default function Page() {
         <li><b>Contenus</b> : publications, photos, commentaires, réactions, sondages, stories, messages privés, groupes et événements.</li>
         <li><b>Relations</b> : demandes d’amis, amitiés, membres bloqués, signalements.</li>
         <li><b>Position approximative</b> (facultatif) : uniquement si tu actives la fonction « À proximité », arrondie à environ 1 km.</li>
+        <li><b>Profil créateur</b> (facultatif) : activité, présentation, services, réalisations et contact public que tu choisis de publier.</li>
         <li><b>Activité</b> : date de dernière activité (pour afficher « en ligne »), notifications.</li>
         <li><b>Données techniques</b> : adresse IP et journaux de connexion conservés par nos hébergeurs pour la sécurité.</li>
       </ul>

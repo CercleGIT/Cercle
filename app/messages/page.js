@@ -23,6 +23,8 @@ function Messages({ user }) {
   useEffect(() => {
     const sujet = new URLSearchParams(window.location.search).get('sujet')
     if (sujet) setTexte('Bonjour, ton annonce « ' + sujet.slice(0, 120) + ' » est-elle toujours disponible ?')
+    const bonjour = new URLSearchParams(window.location.search).get('bonjour')
+    if (bonjour) setTexte(bonjour.slice(0, 300))
   }, [])
 
   const chargerAmis = useCallback(async () => {
