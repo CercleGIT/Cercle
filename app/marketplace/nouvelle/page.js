@@ -82,7 +82,7 @@ function Nouvelle({ user }) {
         <option value="">Non précisé</option><option value="neuf">Neuf</option><option value="occasion">Occasion</option>
       </select>
       <label htmlFor="ville">Ville</label>
-      <input id="ville" value={f.ville} onChange={maj('ville')} maxLength={60} placeholder="Ex. : Cotonou" />
+      <input id="ville" value={f.ville} onChange={maj('ville')} maxLength={60} placeholder="Ex. : Paris" />
       <label htmlFor="desc">Description</label>
       <textarea id="desc" rows={5} value={f.description} onChange={maj('description')} maxLength={4000} />
       <label>Photos ({photos.length}/4)</label>

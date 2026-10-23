@@ -7,6 +7,25 @@ import { appliquerTheme, getTheme } from '@/lib/theme'
 
 const THEMES = [['auto', 'Automatique'], ['clair', 'Clair'], ['sombre', 'Sombre']]
 
+function ZoneSensible() {
+  const [info, setInfo] = useState('')
+  async function supprimer() {
+    const saisie = window.prompt('Action définitive : ton compte et tes publications seront supprimés. Tape SUPPRIMER pour confirmer.')
+    if (saisie !== 'SUPPRIMER') return
+    const { error } = await supabase.rpc('supprimer_mon_compte')
+    if (error) return setInfo('Suppression impossible.')
+    await supabase.auth.signOut()
+  }
+  return (
+    <div className="box">
+      <h2>Zone sensible</h2>
+      <p className="muted">Supprime définitivement ton compte et toutes tes données.</p>
+      <button className="alt sm" onClick={supprimer}>Supprimer mon compte</button>
+      {info && <p className="msg err" role="status">{info}</p>}
+    </div>
+  )
+}
+
 function Parametres({ user }) {
   const [theme, setTheme] = useState('auto')
   const [mdp, setMdp] = useState('')
@@ -34,7 +53,7 @@ function Parametres({ user }) {
           <button className="sm" style={{ marginTop: 10 }}>Changer le mot de passe</button>
         </form>
         {msg && <p className={'msg ' + (msg.err ? 'err' : 'ok')} role="status">{msg.err || msg.ok}</p>}
-        <Link className="lien-ligne" href="/profil"><span>Modifier mon profil, voir mes membres bloqués, télécharger mes données ou supprimer mon compte</span><span>›</span></Link>
+        <Link className="lien-ligne" href="/profil"><span>Modifier mon profil, voir mes membres bloqués ou télécharger mes données</span><span>›</span></Link>
       </div>
 
       <div className="box">
@@ -58,6 +77,8 @@ function Parametres({ user }) {
         <p className="muted">Cercle · retrouve tes amis, tes groupes et le marché de ta communauté.</p>
         <button className="alt sm" onClick={() => supabase.auth.signOut()}>Se déconnecter</button>
       </div>
+
+      <ZoneSensible />
     </>
   )
 }
