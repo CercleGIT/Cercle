@@ -8,7 +8,7 @@ import Logo from '@/components/Logo'
 import Appel from '@/components/Appel'
 import { jouer } from '@/lib/sons'
 
-const LIENS = [['/', 'Fil'], ['/defi', '🔥 Défi'], ['/createurs', 'Créateurs'], ['/amis', 'Amis'], ['/groupes', 'Groupes'], ['/recherche', 'Recherche'], ['/proximite', 'À proximité'], ['/marketplace', 'Marché'], ['/messages', 'Messages'], ['/evenements', 'Événements'], ['/profil', 'Profil']]
+const LIENS = [['/', 'Fil'], ['/defi', '🔥 Défi'], ['/jeux', '🎮 Jeux'], ['/createurs', 'Créateurs'], ['/amis', 'Amis'], ['/groupes', 'Groupes'], ['/recherche', 'Recherche'], ['/proximite', 'À proximité'], ['/marketplace', 'Marché'], ['/messages', 'Messages'], ['/evenements', 'Événements'], ['/profil', 'Profil']]
 
 export default function Shell({ children }) {
   const user = useUser()

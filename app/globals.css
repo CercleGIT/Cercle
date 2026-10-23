@@ -170,3 +170,8 @@ select { width:100%; font:inherit; color:var(--ink); background:var(--bg); borde
 .rec { display:inline-flex; align-items:center; gap:6px; font-weight:700; color:#e11d48; }
 .rec-point { width:10px; height:10px; border-radius:50%; background:#e11d48; animation:clignote 1s infinite; }
 @keyframes clignote { 50% { opacity:.2; } }
+
+/* Jeux */
+.jeu-cadre { display:block; width:100%; height:clamp(540px, 125vw, 700px); border:0; border-radius:12px; background:#080b18; }
+.gros-emoji { font-size:40px; }
+.moi-classement { background:color-mix(in srgb, var(--brand) 12%, transparent); border-radius:10px; padding-left:6px; }
