@@ -6,9 +6,10 @@ import { redimensionner } from '@/lib/image'
 import Avatar from '@/components/Avatar'
 import Stories from '@/components/Stories'
 import Texte from '@/components/Texte'
+import Verifie from '@/components/Verifie'
 
 const REACTIONS = [['coeur', '❤️'], ['rire', '😂'], ['wow', '😮'], ['triste', '😢'], ['pouce', '👍']]
-const SELECTION = 'id, texte, image_url, created_at, auteur, partage_de, sondage, poll_votes(user_id, choix), profiles!auteur(nom, avatar_url), reactions(user_id, emoji), comments(id, texte, created_at, profiles(nom, avatar_url)), original:posts!partage_de(texte, image_url, profiles!auteur(nom))'
+const SELECTION = 'id, texte, image_url, created_at, auteur, partage_de, sondage, poll_votes(user_id, choix), profiles!auteur(nom, avatar_url, verifie), reactions(user_id, emoji), comments(id, texte, created_at, profiles(nom, avatar_url, verifie)), original:posts!partage_de(texte, image_url, profiles!auteur(nom, verifie))'
 
 function Commentaire({ postId, user, apres }) {
   const [t, setT] = useState('')
@@ -124,13 +125,13 @@ export default function Fil({ user, groupId = null }) {
           <article className="box" key={p.id}>
             <div className="entete">
               <Avatar nom={p.profiles?.nom} url={p.profiles?.avatar_url} />
-              <div><Link className="lienmembre" href={'/membre/' + p.auteur}><b>{p.profiles?.nom || 'Membre'}</b></Link>{p.partage_de && <span className="muted"> a partagé</span>}<div className="muted">{new Date(p.created_at).toLocaleString('fr-FR')}</div></div>
+              <div><Link className="lienmembre" href={'/membre/' + p.auteur}><b>{p.profiles?.nom || 'Membre'}</b></Link>{p.profiles?.verifie && <Verifie />}{p.partage_de && <span className="muted"> a partagé</span>}<div className="muted">{new Date(p.created_at).toLocaleString('fr-FR')}</div></div>
             </div>
             {p.texte && <p className="texte"><Texte t={p.texte} /></p>}
             {p.image_url && <img className="photo" src={p.image_url} alt="Photo publiée" />}
             {p.partage_de && (
               <div className="partage">
-                {p.original ? (<><b>{p.original.profiles?.nom || 'Membre'}</b>{p.original.texte && <p className="texte">{p.original.texte}</p>}{p.original.image_url && <img className="photo" src={p.original.image_url} alt="Photo partagée" />}</>)
+                {p.original ? (<><b>{p.original.profiles?.nom || 'Membre'}</b>{p.original.profiles?.verifie && <Verifie />}{p.original.texte && <p className="texte">{p.original.texte}</p>}{p.original.image_url && <img className="photo" src={p.original.image_url} alt="Photo partagée" />}</>)
                   : <span className="muted">Publication indisponible.</span>}
               </div>
             )}
@@ -166,7 +167,7 @@ export default function Fil({ user, groupId = null }) {
             {coms.map(c => (
               <div className="com" key={c.id}>
                 <Avatar nom={c.profiles?.nom} url={c.profiles?.avatar_url} taille={30} />
-                <div className="bulle"><b>{c.profiles?.nom || 'Membre'}</b> {c.texte}</div>
+                <div className="bulle"><b>{c.profiles?.nom || 'Membre'}</b>{c.profiles?.verifie && <Verifie />} {c.texte}</div>
               </div>
             ))}
             <Commentaire postId={p.id} user={user} apres={charger} />

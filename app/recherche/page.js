@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import Shell from '@/components/Shell'
 import Avatar from '@/components/Avatar'
+import Verifie from '@/components/Verifie'
 import { supabase } from '@/lib/supabase'
 
 function Recherche({ user }) {
@@ -13,16 +14,6 @@ function Recherche({ user }) {
 
   const chargerLiens = () => supabase.from('friendships').select('demandeur, destinataire, statut').then(({ data }) => setLiens(data || []))
   useEffect(() => { chargerLiens() }, [])
-  const [tendances, setTendances] = useState([])
-  useEffect(() => {
-    const v = new URLSearchParams(window.location.search).get('q')
-    if (v) setQ(v)
-    supabase.from('posts').select('texte').is('group_id', null).order('created_at', { ascending: false }).limit(200).then(({ data }) => {
-      const c = {}
-      ;(data || []).forEach(x => (x.texte || '').match(/#[\p{L}\p{N}_]+/gu)?.forEach(t => { c[t] = (c[t] || 0) + 1 }))
-      setTendances(Object.entries(c).sort((a, b) => b[1] - a[1]).slice(0, 8).map(x => x[0]))
-    })
-  }, [])
 
   useEffect(() => {
     const t = setTimeout(async () => {
@@ -30,7 +21,7 @@ function Recherche({ user }) {
       if (mot.length < 2) { setMembres([]); setPosts([]); setFait(false); return }
       const motif = `%${mot.replace(/[%_,()]/g, ' ')}%`
       const [m, p] = await Promise.all([
-        supabase.from('profiles').select('id, nom, bio, avatar_url').ilike('nom', motif.replace('%@', '%')).neq('id', user.id).limit(10),
+        supabase.from('profiles').select('id, nom, bio, avatar_url, verifie').ilike('nom', motif).neq('id', user.id).limit(10),
         supabase.from('posts').select('id, texte, created_at, profiles!auteur(nom, avatar_url)').ilike('texte', motif).is('group_id', null).order('created_at', { ascending: false }).limit(20),
       ])
       setMembres(m.data || []); setPosts(p.data || []); setFait(true)
@@ -50,12 +41,6 @@ function Recherche({ user }) {
         <h2>Recherche</h2>
         <input value={q} onChange={e => setQ(e.target.value)} placeholder="Un prénom ou un mot d’une publication" aria-label="Recherche" />
       </div>
-      {tendances.length > 0 && (
-        <div className="box">
-          <h2>Tendances</h2>
-          <div className="actions">{tendances.map(t => <button key={t} className="alt sm" onClick={() => setQ(t)}>{t}</button>)}</div>
-        </div>
-      )}
       {fait && !membres.length && !posts.length && <p className="muted">Aucun résultat.</p>}
       {membres.length > 0 && (
         <div className="box">
@@ -65,7 +50,7 @@ function Recherche({ user }) {
             return (
               <div className="resultat" key={m.id}>
                 <Avatar nom={m.nom} url={m.avatar_url} />
-                <div><b>{m.nom}</b>{m.bio && <div className="muted">{m.bio}</div>}</div>
+                <div><b>{m.nom}</b>{m.verifie && <Verifie />}{m.bio && <div className="muted">{m.bio}</div>}</div>
                 {l ? <span className="muted">{l.statut === 'accepte' ? 'Ami' : 'En attente'}</span> : <button className="sm" onClick={() => ajouter(m.id)}>Ajouter</button>}
               </div>
             )

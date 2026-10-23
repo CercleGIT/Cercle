@@ -153,3 +153,6 @@ select { width:100%; font:inherit; color:var(--ink); background:var(--bg); borde
 .lien-ligne { display:flex; justify-content:space-between; align-items:center; gap:12px; padding:12px 0; border-bottom:1px solid var(--line); color:var(--ink); text-decoration:none; }
 .lien-ligne:last-child { border-bottom:0; }
 .lien-ligne span:last-child { color:var(--mute); font-size:20px; }
+
+/* Certification */
+.verifie { display:inline-grid; place-items:center; width:16px; height:16px; border-radius:50%; background:#1d9bf0; color:#fff; font-size:11px; font-weight:800; margin-left:4px; vertical-align:middle; line-height:1; }

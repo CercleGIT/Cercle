@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Shell from '@/components/Shell'
 import Avatar from '@/components/Avatar'
+import Verifie from '@/components/Verifie'
 import { supabase } from '@/lib/supabase'
 import { redimensionner } from '@/lib/image'
 
@@ -34,7 +35,7 @@ function Messages({ user }) {
       ...(voulu && voulu !== user.id ? [voulu] : []),
     ])]
     if (!ids.length) return setVide(true)
-    const { data: ps } = await supabase.from('profiles').select('id, nom, avatar_url, derniere_activite').in('id', ids)
+    const { data: ps } = await supabase.from('profiles').select('id, nom, avatar_url, derniere_activite, verifie').in('id', ids)
     setAmis(ps || [])
     setActif(a => a || (ps || []).find(p => p.id === voulu) || (ps || [])[0] || null)
     const { data: nl } = await supabase.from('messages').select('expediteur').eq('destinataire', user.id).eq('lu', false)
@@ -85,7 +86,7 @@ function Messages({ user }) {
       <div className="onglets">
         {amis.map(a => (
           <button key={a.id} className={a.id === actif?.id ? '' : 'alt'} onClick={() => setActif(a)}>
-            <Avatar nom={a.nom} url={a.avatar_url} taille={22} /> {a.nom}
+            <Avatar nom={a.nom} url={a.avatar_url} taille={22} /> {a.nom}{a.verifie && <Verifie />}
             {enLigne(a.derniere_activite) && <span className="point" title="En ligne" />}
             {nonLus[a.id] > 0 && <span className="nonlu">{nonLus[a.id]}</span>}
           </button>

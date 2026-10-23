@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from 'react'
 import Shell from '@/components/Shell'
 import Fil from '@/components/Fil'
 import Avatar from '@/components/Avatar'
+import Verifie from '@/components/Verifie'
 import { supabase } from '@/lib/supabase'
 import { redimensionner } from '@/lib/image'
 
@@ -24,7 +25,7 @@ function Groupe({ user }) {
     const { data } = await supabase.from('groups').select('id, nom, description, prive, image_url, createur').eq('id', gid).maybeSingle()
     setG(data)
     if (!data) return
-    const { data: m } = await supabase.from('group_members').select('user_id, role, profiles(nom, avatar_url)').eq('group_id', gid)
+    const { data: m } = await supabase.from('group_members').select('user_id, role, profiles(nom, avatar_url, verifie)').eq('group_id', gid)
     setMembres(m || [])
     const { data: inv } = await supabase.from('group_invites').select('invite').eq('group_id', gid)
     setInvites((inv || []).map(x => x.invite))
@@ -121,7 +122,7 @@ function Groupe({ user }) {
                 {membres.map(m => (
                   <div className="resultat" key={m.user_id}>
                     <Avatar nom={m.profiles?.nom} url={m.profiles?.avatar_url} taille={36} />
-                    <div><Link className="lienmembre" href={'/membre/' + m.user_id}><b>{m.profiles?.nom || 'Membre'}</b></Link> {m.role === 'admin' && <span className="etiquette-role">admin</span>}</div>
+                    <div><Link className="lienmembre" href={'/membre/' + m.user_id}><b>{m.profiles?.nom || 'Membre'}</b></Link>{m.profiles?.verifie && <Verifie />} {m.role === 'admin' && <span className="etiquette-role">admin</span>}</div>
                     {admin && m.user_id !== user.id && m.role !== 'admin' && <button className="alt sm" onClick={() => promouvoir(m.user_id)}>Nommer admin</button>}
                     {admin && m.user_id !== user.id && <button className="alt sm" onClick={() => retirer(m.user_id)}>Retirer</button>}
                   </div>

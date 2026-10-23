@@ -4,6 +4,7 @@ import { useParams } from 'next/navigation'
 import { useCallback, useEffect, useState } from 'react'
 import Shell from '@/components/Shell'
 import Avatar from '@/components/Avatar'
+import Verifie from '@/components/Verifie'
 import { supabase } from '@/lib/supabase'
 
 function Membre({ user }) {
@@ -12,16 +13,20 @@ function Membre({ user }) {
   const [lien, setLien] = useState(null)
   const [posts, setPosts] = useState([])
   const [info, setInfo] = useState('')
+  const [admin, setAdmin] = useState(false)
 
   const charger = useCallback(async () => {
-    const { data } = await supabase.from('profiles').select('id, nom, bio, avatar_url, derniere_activite').eq('id', id).maybeSingle()
+    const { data } = await supabase.from('profiles').select('id, nom, bio, avatar_url, derniere_activite, verifie').eq('id', id).maybeSingle()
     setP(data)
     const { data: l } = await supabase.from('friendships').select('demandeur, destinataire, statut')
     setLien((l || []).find(x => [x.demandeur, x.destinataire].includes(id)) || null)
     const { data: ps } = await supabase.from('posts').select('id, texte, image_url, created_at').eq('auteur', id).is('group_id', null).order('created_at', { ascending: false }).limit(20)
     setPosts(ps || [])
   }, [id])
-  useEffect(() => { charger() }, [charger])
+  useEffect(() => {
+    charger()
+    supabase.from('admins').select('user_id').eq('user_id', user.id).maybeSingle().then(({ data }) => setAdmin(!!data))
+  }, [charger, user.id])
 
   async function ajouter() {
     const { error } = await supabase.from('friendships').insert({ demandeur: user.id, destinataire: id })
@@ -33,6 +38,11 @@ function Membre({ user }) {
     setInfo(error ? 'Blocage impossible.' : 'Membre bloqué.')
   }
 
+  const basculerCertif = async () => {
+    const { error } = await supabase.from('profiles').update({ verifie: !p.verifie }).eq('id', id)
+    setInfo(error ? 'Action impossible.' : p.verifie ? 'Certification retirée.' : 'Compte certifié.')
+    charger()
+  }
   const appeler = video => window.dispatchEvent(new CustomEvent('cercle-appel', { detail: { id, nom: p?.nom, avatar: p?.avatar_url, video } }))
 
   if (p === undefined) return <p className="muted">Chargement…</p>
@@ -45,7 +55,7 @@ function Membre({ user }) {
         <div className="profil-tete">
           <Avatar nom={p.nom} url={p.avatar_url} taille={80} />
           <div>
-            <h2 style={{ margin: 0 }}>{p.nom} {enLigne && <span className="point" title="En ligne" />}</h2>
+            <h2 style={{ margin: 0 }}>{p.nom} {p.verifie && <Verifie />} {enLigne && <span className="point" title="En ligne" />}</h2>
             {p.bio && <p className="texte">{p.bio}</p>}
           </div>
         </div>
@@ -56,6 +66,7 @@ function Membre({ user }) {
           {!moi && lien?.statut === 'accepte' && <Link className="btnlink" href={'/messages?ami=' + id}>Écrire un message</Link>}
           {!moi && lien?.statut === 'accepte' && <><button className="alt sm" onClick={() => appeler(false)}>📞 Vocal</button><button className="alt sm" onClick={() => appeler(true)}>🎥 Vidéo</button></>}
           {!moi && <button className="alt sm droite" onClick={bloquer}>Bloquer</button>}
+          {admin && <button className="alt sm" onClick={basculerCertif}>{p.verifie ? 'Retirer la certification' : '✓ Certifier ce compte'}</button>}
         </div>
         {info && <p className="msg ok" role="status">{info}</p>}
       </div>

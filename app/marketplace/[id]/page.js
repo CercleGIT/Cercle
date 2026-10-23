@@ -4,6 +4,7 @@ import { useParams, useRouter } from 'next/navigation'
 import { useCallback, useEffect, useState } from 'react'
 import Shell from '@/components/Shell'
 import Avatar from '@/components/Avatar'
+import Verifie from '@/components/Verifie'
 import { supabase } from '@/lib/supabase'
 import { formatPrix, nomCategorie } from '@/lib/marche'
 
@@ -17,7 +18,7 @@ function Annonce({ user }) {
   const [info, setInfo] = useState('')
 
   const charger = useCallback(async () => {
-    const { data } = await supabase.from('annonces').select('*, vendeur_profil:profiles!vendeur(nom, avatar_url)').eq('id', id).maybeSingle()
+    const { data } = await supabase.from('annonces').select('*, vendeur_profil:profiles!vendeur(nom, avatar_url, verifie)').eq('id', id).maybeSingle()
     setA(data)
     const { data: f } = await supabase.from('favoris').select('annonce_id').match({ user_id: user.id, annonce_id: id }).maybeSingle()
     setFavori(!!f)
@@ -72,7 +73,7 @@ function Annonce({ user }) {
         {a.description && <p className="texte">{a.description}</p>}
         <div className="resultat">
           <Avatar nom={a.vendeur_profil?.nom} url={a.vendeur_profil?.avatar_url} taille={40} />
-          <div><Link className="lienmembre" href={'/membre/' + a.vendeur}><b>{a.vendeur_profil?.nom || 'Vendeur'}</b></Link><div className="muted">Vendeur</div></div>
+          <div><Link className="lienmembre" href={'/membre/' + a.vendeur}><b>{a.vendeur_profil?.nom || 'Vendeur'}</b></Link>{a.vendeur_profil?.verifie && <Verifie />}<div className="muted">Vendeur</div></div>
         </div>
         <div className="actions">
           {!mienne && a.statut === 'active' && <Link className="btnlink" href={'/messages?ami=' + a.vendeur + '&sujet=' + encodeURIComponent(a.titre)}>💬 Contacter le vendeur</Link>}
