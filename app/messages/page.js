@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Shell from '@/components/Shell'
 import Avatar from '@/components/Avatar'
+import { jouer } from '@/lib/sons'
 import Verifie from '@/components/Verifie'
 import { supabase } from '@/lib/supabase'
 import { redimensionner } from '@/lib/image'
@@ -20,6 +21,7 @@ function Messages({ user }) {
   const [photo, setPhoto] = useState(null)
   const [vide, setVide] = useState(false)
   const liste = useRef(null)
+  const dernierEntrant = useRef(null)
   useEffect(() => {
     const sujet = new URLSearchParams(window.location.search).get('sujet')
     if (sujet) setTexte('Bonjour, ton annonce « ' + sujet.slice(0, 120) + ' » est-elle toujours disponible ?')
@@ -57,6 +59,10 @@ function Messages({ user }) {
       .or(`and(expediteur.eq.${user.id},destinataire.eq.${actif.id}),and(expediteur.eq.${actif.id},destinataire.eq.${user.id})`)
       .order('created_at', { ascending: true }).limit(200)
     setFil(data || [])
+    const maxEntrant = (data || []).filter(m => m.expediteur === actif.id).reduce((a, m) => Math.max(a, m.id), 0)
+    const pe = dernierEntrant.current
+    if (pe && pe.id === actif.id && maxEntrant > pe.max) jouer('message')
+    dernierEntrant.current = { id: actif.id, max: maxEntrant }
     if ((data || []).some(m => m.expediteur === actif.id && !m.lu)) {
       await supabase.rpc('marquer_lu', { ami: actif.id })
       chargerAmis()

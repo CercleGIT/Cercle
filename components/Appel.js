@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import Avatar from '@/components/Avatar'
+import { arreterSonnerie, demarrerSonnerie } from '@/lib/sons'
 
 const STUN = [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:stun1.l.google.com:19302' }]
 
@@ -210,6 +211,13 @@ export default function Appel({ user }) {
     const t = setInterval(() => setDuree(d => d + 1), 1000)
     return () => clearInterval(t)
   }, [etat])
+
+  useEffect(() => {
+    if (etat?.phase === 'entrant') demarrerSonnerie('appel')
+    else if (etat?.phase === 'sortant') demarrerSonnerie('sortant')
+    else arreterSonnerie()
+  }, [etat?.phase])
+  useEffect(() => () => arreterSonnerie(), [])
 
   const basculerMicro = () => { flux.current?.getAudioTracks().forEach(t => { t.enabled = !micro }); setMicro(!micro) }
   const basculerCamera = () => { flux.current?.getVideoTracks().forEach(t => { t.enabled = !camera }); setCamera(!camera) }

@@ -4,8 +4,32 @@ import { useEffect, useState } from 'react'
 import Shell from '@/components/Shell'
 import { supabase } from '@/lib/supabase'
 import { appliquerTheme, getTheme } from '@/lib/theme'
+import { ecrireSons, lireSons, tester } from '@/lib/sons'
 
 const THEMES = [['auto', 'Automatique'], ['clair', 'Clair'], ['sombre', 'Sombre']]
+
+function Sons() {
+  const [s, setS] = useState(null)
+  useEffect(() => { setS(lireSons()) }, [])
+  if (!s) return null
+  const maj = (k, v) => { const n = { ...s, [k]: v }; setS(n); ecrireSons(n) }
+  const LIGNES = [['message', 'Messages'], ['notification', 'Notifications'], ['appel', 'Appels (sonnerie)']]
+  return (
+    <div className="box">
+      <h2>Sons</h2>
+      <label className="check"><input type="checkbox" checked={s.actifs} onChange={e => maj('actifs', e.target.checked)} /> Activer les sons</label>
+      {LIGNES.map(([k, nom]) => (
+        <div className="lien-ligne" key={k}>
+          <label className="check"><input type="checkbox" checked={s[k]} disabled={!s.actifs} onChange={e => maj(k, e.target.checked)} /> {nom}</label>
+          <button type="button" className="alt sm" onClick={() => tester(k)}>▶ Tester</button>
+        </div>
+      ))}
+      <label htmlFor="vol">Volume</label>
+      <input id="vol" type="range" min="0.1" max="1" step="0.1" value={s.volume} onChange={e => maj('volume', Number(e.target.value))} />
+      <p className="muted">Les sons ne jouent que lorsque Cercle est ouvert. Le navigateur exige d’avoir touché la page une première fois.</p>
+    </div>
+  )
+}
 
 function ZoneSensible() {
   const [info, setInfo] = useState('')
@@ -69,6 +93,8 @@ function Parametres({ user }) {
           ))}
         </div>
       </div>
+
+      <Sons />
 
       <div className="box">
         <h2>Informations légales</h2>
