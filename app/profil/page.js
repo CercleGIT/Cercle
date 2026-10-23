@@ -52,6 +52,7 @@ function Donnees({ user }) {
       messages_recus: await lire('messages', 'destinataire'),
       amities: (await supabase.from('friendships').select('*')).data || [],
       evenements_crees: await lire('events', 'createur'),
+      position_approximative: await lire('positions', 'user_id'),
     }
     const lien = document.createElement('a')
     lien.href = URL.createObjectURL(new Blob([JSON.stringify(donnees, null, 2)], { type: 'application/json' }))

@@ -14,6 +14,7 @@ export default function Page() {
         <li><b>Profil</b> : photo, texte « à propos de moi » (facultatifs).</li>
         <li><b>Contenus</b> : publications, photos, commentaires, réactions, sondages, stories, messages privés, groupes et événements.</li>
         <li><b>Relations</b> : demandes d’amis, amitiés, membres bloqués, signalements.</li>
+        <li><b>Position approximative</b> (facultatif) : uniquement si tu actives la fonction « À proximité », arrondie à environ 1 km.</li>
         <li><b>Activité</b> : date de dernière activité (pour afficher « en ligne »), notifications.</li>
         <li><b>Données techniques</b> : adresse IP et journaux de connexion conservés par nos hébergeurs pour la sécurité.</li>
       </ul>
@@ -41,6 +42,9 @@ export default function Page() {
       </ul>
       <p>Si tu estimes que tes droits ne sont pas respectés, tu peux saisir l’autorité de protection des données de ton pays, par exemple l’Autorité de Protection des Données à caractère Personnel (APDP) au Bénin. <mark>[À COMPLÉTER : mentionne ici l’autorité compétente selon ton pays et celui de tes membres]</mark></p>
       <p><mark>[À COMPLÉTER SI APPLICABLE : « Le traitement a fait l’objet d’une déclaration auprès de l’APDP, numéro … »]</mark></p>
+
+      <h2>Localisation (« À proximité »)</h2>
+      <p>Cette fonction est facultative et désactivée par défaut. Si tu l’actives, ton navigateur te demande l’autorisation de te localiser. Nous enregistrons une position <b>arrondie à environ 1 km</b>, jamais ta position exacte. Les autres membres voient seulement une distance approximative (« à moins de X km »), et uniquement s’ils partagent aussi leur position et que tu as choisi de leur être visible (tous les membres, ou tes amis uniquement). Tu peux te masquer ou effacer ta position à tout moment depuis la page « À proximité ». Une position qui n’a pas été mise à jour depuis 30 jours n’est plus visible.</p>
 
       <h2>Mineurs</h2>
       <p>Cercle est réservé aux personnes de 16 ans et plus. Si tu penses qu’un mineur de moins de 16 ans s’est inscrit, signale-le à l’adresse de contact : le compte sera supprimé.</p>
