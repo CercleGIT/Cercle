@@ -59,7 +59,7 @@ function Jeu({ user }) {
     <>
       <Link href="/jeux" className="muted">← Tous les jeux</Link>
       <div className="box" style={{ marginTop: 8, padding: 8 }}>
-        <iframe ref={cadre} src={jeu.fichier} title={jeu.nom} className="jeu-cadre" allow="fullscreen" />
+        <iframe ref={cadre} src={jeu.fichier} title={jeu.nom} className="jeu-cadre" style={jeu.hauteur ? { height: jeu.hauteur } : undefined} allow="fullscreen" />
       </div>
       <div className="box defi-tete">
         <p className="compte">{dernier !== null ? 'Dernière partie : ' + dernier + ' points · ' : ''}{meilleur !== null ? 'Ton meilleur score : ' + meilleur : 'Joue une partie pour entrer au classement !'}</p>
