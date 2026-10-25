@@ -6,7 +6,8 @@ import { SOURCES_EMPLOIS, PAYS, DOMAINES } from '@/lib/sourcesEmplois'
 export const dynamic = 'force-dynamic'
 export const maxDuration = 25
 
-const parseur = new XMLParser({ ignoreAttributes: false, attributeNamePrefix: '@_', textNodeName: '#text', processEntities: false })const texteDe = v => (v == null ? '' : typeof v === 'object' ? (v['#text'] ?? '') : String(v))
+const parseur = new XMLParser({ ignoreAttributes: false, attributeNamePrefix: '@_', textNodeName: '#text', processEntities: false })
+  const texteDe = v => (v == null ? '' : typeof v === 'object' ? (v['#text'] ?? '') : String(v))
 const cp = n => { try { return String.fromCodePoint(n) } catch { return '' } }
 const decoder = t => t
   .replace(/&#x([0-9a-f]+);/gi, (m, n) => cp(parseInt(n, 16)))
