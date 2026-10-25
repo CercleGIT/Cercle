@@ -5,20 +5,29 @@ import Shell from '@/components/Shell'
 import { supabase } from '@/lib/supabase'
 import { appliquerTheme, getTheme } from '@/lib/theme'
 import { ecrireSons, lireSons, tester } from '@/lib/sons'
-import { LANGUES, getLangue, setLangue } from '@/lib/langue'
+import { LANGUES, getLangueChoisie, langueAppareil, setLangue, setTraductionAuto, traductionAutoActive } from '@/lib/langue'
 
 const THEMES = [['auto', 'Automatique'], ['clair', 'Clair'], ['sombre', 'Sombre']]
 
 function Langue() {
-  const [l, setL] = useState('fr')
-  useEffect(() => { setL(getLangue()) }, [])
+  const [l, setL] = useState('auto')
+  const [auto, setAuto] = useState(true)
+  const [appareil, setAppareil] = useState('fr')
+  useEffect(() => { setL(getLangueChoisie()); setAuto(traductionAutoActive()); setAppareil(langueAppareil()) }, [])
+  const nomAppareil = (LANGUES.find(x => x[0] === appareil) || [null, appareil])[1]
   return (
     <div className="box">
-      <h2>Langue de traduction</h2>
-      <p className="muted">Le bouton « Traduire » sous les publications, commentaires, messages et annonces traduira dans cette langue.</p>
-      <select value={l} onChange={e => { setL(e.target.value); setLangue(e.target.value) }} aria-label="Langue de traduction">
+      <h2>Traduction</h2>
+      <label className="check">
+        <input type="checkbox" checked={auto} onChange={e => { setAuto(e.target.checked); setTraductionAuto(e.target.checked) }} />
+        Traduire automatiquement les publications, commentaires et annonces écrits dans une autre langue
+      </label>
+      <label htmlFor="lang">Traduire vers</label>
+      <select id="lang" value={l} onChange={e => { setL(e.target.value); setLangue(e.target.value) }}>
+        <option value="auto">Automatique (langue de mon appareil : {nomAppareil})</option>
         {LANGUES.map(([code, nom]) => <option key={code} value={code}>{nom}</option>)}
       </select>
+      <p className="muted">Les messages privés ne sont traduits que si tu cliques sur « Traduire ». La traduction utilise un service gratuit, avec une limite quotidienne.</p>
     </div>
   )
 }

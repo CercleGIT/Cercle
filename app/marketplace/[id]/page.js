@@ -72,7 +72,7 @@ function Annonce({ user }) {
         <div className="prix-grand">{formatPrix(a.prix, a.devise)}</div>
         <div className="muted">{[nomCategorie(a.categorie), a.etat === 'neuf' ? 'Neuf' : a.etat === 'occasion' ? 'Occasion' : null, [a.ville, a.pays].filter(Boolean).join(', '), new Date(a.created_at).toLocaleDateString('fr-FR')].filter(Boolean).join(' · ')}</div>
         {a.description && <p className="texte">{a.description}</p>}
-        {a.description && <Traduire texte={a.description} />}
+        {a.description && <Traduire texte={a.description} auto />}
         <div className="resultat">
           <Avatar nom={a.vendeur_profil?.nom} url={a.vendeur_profil?.avatar_url} taille={40} id={a.vendeur} />
           <div><Link className="lienmembre" href={'/membre/' + a.vendeur}><b>{a.vendeur_profil?.nom || 'Vendeur'}</b></Link>{a.vendeur_profil?.verifie && <Verifie />}<div className="muted">Vendeur</div></div>
