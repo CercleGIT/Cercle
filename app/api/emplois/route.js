@@ -7,20 +7,14 @@ export const dynamic = 'force-dynamic'
 export const maxDuration = 25
 
 const parseur = new XMLParser({ ignoreAttributes: false, attributeNamePrefix: '@_', textNodeName: '#text', processEntities: false })
-  const texteDe = v => (v == null ? '' : typeof v === 'object' ? (v['#text'] ?? '') : String(v))
+const texteDe = v => (v == null ? '' : typeof v === 'object' ? (v['#text'] ?? '') : String(v))
 const cp = n => { try { return String.fromCodePoint(n) } catch { return '' } }
 const decoder = t => t
   .replace(/&#x([0-9a-f]+);/gi, (m, n) => cp(parseInt(n, 16)))
   .replace(/&#(\d+);/g, (m, n) => cp(parseInt(n, 10)))
   .replace(/&nbsp;/g, ' ').replace(/&quot;/g, '"').replace(/&apos;/g, "'")
   .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&')
-const cp = n => { try { return String.fromCodePoint(n) } catch { return '' } }
-const decoder = t => t
-  .replace(/&#x([0-9a-f]+);/gi, (m, n) => cp(parseInt(n, 16)))
-  .replace(/&#(\d+);/g, (m, n) => cp(parseInt(n, 10)))
-  .replace(/&nbsp;/g, ' ').replace(/&quot;/g, '"').replace(/&apos;/g, "'")
-  .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&')
-const nettoyer = h => decoder(decoder(texteDe(h)).replace(/<[^>]*>/g, ' ')).replace(/\s+/g, ' ').trim()  .replace(/&#0?39;|&apos;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/\s+/g, ' ').trim()
+const nettoyer = h => decoder(decoder(texteDe(h)).replace(/<[^>]*>/g, ' ')).replace(/\s+/g, ' ').trim()
 const un = v => (Array.isArray(v) ? v[0] : v)
 const liste = v => String(v || '').toLowerCase().split(',').map(s => s.trim()).filter(Boolean)
 
@@ -35,7 +29,7 @@ const detecterPays = t => {
 
 function lienDe(it) {
   const l = Array.isArray(it.link) ? (it.link.find(x => x && x['@_rel'] === 'alternate') || it.link[0]) : it.link
-  return (typeof l === 'object' && l ? (l['@_href'] || texteDe(l)) : texteDe(l)).trim()
+  return decoder((typeof l === 'object' && l ? (l['@_href'] || texteDe(l)) : texteDe(l)).trim())
 }
 
 async function recuperer(source) {
@@ -65,14 +59,14 @@ async function recuperer(source) {
 
     const doc = parseur.parse(await r.text())
     const brut = doc?.rss?.channel?.item || doc?.feed?.entry || doc?.['rdf:RDF']?.item || []
-    const liste2 = Array.isArray(brut) ? brut : [brut]
-    const articles = liste2.map(it => {
+    const items = Array.isArray(brut) ? brut : [brut]
+    const articles = items.map(it => {
       const region = nettoyer(it.region)
       return {
         source: source.nom, type: source.type, jeunes: source.jeunes, zone: source.zone,
         pays: source.pays || detecterPays(region),
         titre: nettoyer(un(it.title)),
-        lien: decoder(lienDe(it)),
+        lien: lienDe(it),
         region,
         tags: nettoyer(it.category),
         resume: nettoyer(it.description || it.summary || it['content:encoded'] || it.content),
