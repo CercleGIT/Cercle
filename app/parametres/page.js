@@ -5,8 +5,23 @@ import Shell from '@/components/Shell'
 import { supabase } from '@/lib/supabase'
 import { appliquerTheme, getTheme } from '@/lib/theme'
 import { ecrireSons, lireSons, tester } from '@/lib/sons'
+import { LANGUES, getLangue, setLangue } from '@/lib/langue'
 
 const THEMES = [['auto', 'Automatique'], ['clair', 'Clair'], ['sombre', 'Sombre']]
+
+function Langue() {
+  const [l, setL] = useState('fr')
+  useEffect(() => { setL(getLangue()) }, [])
+  return (
+    <div className="box">
+      <h2>Langue de traduction</h2>
+      <p className="muted">Le bouton « Traduire » sous les publications, commentaires, messages et annonces traduira dans cette langue.</p>
+      <select value={l} onChange={e => { setL(e.target.value); setLangue(e.target.value) }} aria-label="Langue de traduction">
+        {LANGUES.map(([code, nom]) => <option key={code} value={code}>{nom}</option>)}
+      </select>
+    </div>
+  )
+}
 
 function Sons() {
   const [s, setS] = useState(null)
@@ -93,6 +108,8 @@ function Parametres({ user }) {
           ))}
         </div>
       </div>
+
+      <Langue />
 
       <Sons />
 

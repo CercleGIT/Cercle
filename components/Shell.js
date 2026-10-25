@@ -54,7 +54,7 @@ export default function Shell({ children }) {
 
   useEffect(() => {
     if (!user) return
-    const ping = () => supabase.from('profiles').update({ derniere_activite: new Date().toISOString() }).eq('id', user.id)
+    const ping = async () => { await supabase.from('profiles').update({ derniere_activite: new Date().toISOString() }).eq('id', user.id) }
     ping()
     const t = setInterval(ping, 60000)
     return () => clearInterval(t)

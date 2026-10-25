@@ -70,12 +70,10 @@ function Nouvelle({ user }) {
         <option value="">Choisir…</option>
         {PAYS.map(([nom]) => <option key={nom} value={nom}>{nom}</option>)}
       </select>
-      <label htmlFor="prix">Prix (laisse vide pour « prix à débattre », 0 pour « gratuit »). Devise : € ou $, modifiable.</label>
+      <label htmlFor="prix">Prix (laisse vide pour « prix à débattre », 0 pour « gratuit »). La devise dépend du pays de vente.</label>
       <div className="saisie">
         <input id="prix" type="number" min="0" step="any" value={f.prix} onChange={maj('prix')} />
-        <select value={f.devise} onChange={maj('devise')} aria-label="Devise" style={{ width: 110 }}>
-          {DEVISES.map(([k, n]) => <option key={k} value={k}>{n}</option>)}
-        </select>
+        <span className="devise-fixe" title="La devise dépend du pays de vente">{f.pays ? (DEVISES.find(d => d[0] === f.devise) || [null, f.devise])[1] : '—'}</span>
       </div>
       <label htmlFor="etat">État</label>
       <select id="etat" value={f.etat} onChange={maj('etat')}>

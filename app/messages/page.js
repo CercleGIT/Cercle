@@ -6,6 +6,7 @@ import Avatar from '@/components/Avatar'
 import Icone from '@/components/Icones'
 import Verifie from '@/components/Verifie'
 import MessageVocal from '@/components/MessageVocal'
+import Traduire from '@/components/Traduire'
 import { jouer } from '@/lib/sons'
 import { supabase } from '@/lib/supabase'
 import { redimensionner } from '@/lib/image'
@@ -256,6 +257,7 @@ function Messages({ user }) {
                     {m.image_url && <img src={m.image_url} alt="Photo envoyée" />}
                     {m.audio_path && <MessageVocal chemin={m.audio_path} />}
                     {m.texte}
+                    {m.texte && m.expediteur !== user.id && <Traduire texte={m.texte} />}
                     <span className="heure-msg">{heure(m.created_at)}{m.id === dernierMien?.id && m.lu ? ' · Vu' : ''}</span>
                   </div>
                 </div>

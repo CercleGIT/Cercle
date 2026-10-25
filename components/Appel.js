@@ -54,6 +54,7 @@ export default function Appel({ user }) {
   const delai = useRef(null)
   const videoLocale = useRef(null)
   const videoDistante = useRef(null)
+  const audioDistant = useRef(null)
 
   const majEtat = e => { etatRef.current = e; setEtat(e) }
   const attacher = () => {
@@ -61,11 +62,21 @@ export default function Appel({ user }) {
     const d = videoDistante.current
     if (d && distant.current && d.srcObject !== distant.current) {
       d.srcObject = distant.current
-      d.play().catch(() => setSonBloque(true))
+      d.play().catch(() => {})
+    }
+    const au = audioDistant.current
+    if (au && distant.current && au.srcObject !== distant.current) {
+      au.srcObject = distant.current
+      au.play().catch(() => setSonBloque(true))
     }
   }
   const majDiag = p => setDiag('Connexion : ' + p.connectionState + ' · ICE : ' + p.iceConnectionState + ' · échanges ' + stats.current.env + '/' + stats.current.rec + ' · ' + (process.env.NEXT_PUBLIC_TURN_USER ? 'relais configuré' : 'sans relais'))
-  const envoyer = (type, payload) => supabase.from('appels').insert({ de: user.id, vers: pair.current, type, payload: { sid: sid.current, ...payload } })
+  // IMPORTANT : une requête Supabase ne part que si on l'attend (await). L'ancienne version n'envoyait donc jamais les candidats ICE.
+  const envoyer = async (type, payload) => {
+    const res = await supabase.from('appels').insert({ de: user.id, vers: pair.current, type, payload: { sid: sid.current, ...payload } })
+    if (res.error && type !== 'ice') setErreur('Signal impossible : ' + res.error.message)
+    return res
+  }
 
   const terminer = useCallback(async (notifier = true) => {
     clearTimeout(delai.current)
@@ -228,13 +239,14 @@ export default function Appel({ user }) {
       {erreur && !etat && <div className="toast-appel" role="alert" onClick={() => setErreur('')}>{erreur}</div>}
       {etat && (
         <div className="appel" role="dialog" aria-label="Appel">
-          <video ref={videoDistante} autoPlay playsInline className={plein ? 'distante' : 'cache'} />
+          <video ref={videoDistante} autoPlay playsInline muted className={plein ? 'distante' : 'cache'} />
+          <audio ref={audioDistant} autoPlay />
           {!plein && <div className="appel-id"><Avatar nom={etat.nom} url={etat.avatar} taille={96} /><h2>{etat.nom}</h2></div>}
           <p className="appel-etat">
             {etat.phase === 'entrant' ? 'Appel ' + (etat.video ? 'vidéo' : 'vocal') + ' entrant…' : etat.phase === 'sortant' ? 'Appel en cours…' : formatDuree(duree)}
           </p>
           {diag && <p className="appel-diag">{diag}</p>}
-          {sonBloque && <button className="alt sm" onClick={() => { videoDistante.current?.play(); setSonBloque(false) }}>🔊 Activer le son</button>}
+          {sonBloque && <button className="alt sm" onClick={() => { videoDistante.current?.play(); audioDistant.current?.play(); setSonBloque(false) }}>🔊 Activer le son</button>}
           {etat.video && etat.phase !== 'entrant' && <video ref={videoLocale} autoPlay playsInline muted className="locale" />}
           <div className="appel-boutons">
             {etat.phase === 'entrant' ? (

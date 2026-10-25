@@ -250,3 +250,19 @@ select { width:100%; font:inherit; color:var(--ink); background:var(--bg); borde
   .messagerie.conv-ouverte .liste-conv { display:none; }
   .retour-conv { display:inline-grid; }
 }
+
+/* Traduction */
+.trad { display:block; }
+.lien-trad { background:none; color:var(--brand); border:0; padding:0; margin:4px 0 0; font-size:13px; font-weight:600; width:auto; cursor:pointer; }
+.trad-res { display:block; margin-top:4px; padding:6px 10px; background:var(--bg); border-radius:10px; border-left:3px solid var(--brand); white-space:pre-wrap; overflow-wrap:anywhere; color:var(--ink); }
+.bulle-msg.moi .trad { display:none; }
+select { width:100%; font:inherit; color:var(--ink); background:var(--bg); border:1px solid var(--line); border-radius:12px; padding:10px 14px; }
+/* Marché : devise automatique */
+.devise-fixe { display:grid; place-items:center; min-width:56px; padding:0 12px; border:1px solid var(--line); border-radius:12px; background:var(--bg); font-weight:800; }
+/* Suggestions sur le Fil */
+.suggestions-fil { margin-bottom:12px; }
+.suggestions-fil h3 { margin:0 0 8px; font-size:16px; }
+.defile { display:flex; gap:10px; overflow-x:auto; padding-bottom:6px; }
+.sugg-carte { position:relative; flex:none; width:156px; display:flex; flex-direction:column; align-items:center; gap:4px; padding:12px 8px; text-align:center; background:var(--card); border:1px solid var(--line); border-radius:14px; box-shadow:var(--sh); }
+.sugg-raison { font-size:12px; min-height:30px; }
+.sugg-x { position:absolute; top:4px; right:4px; width:24px; height:24px; padding:0; margin:0; border:0; border-radius:50%; background:var(--bg); color:var(--mute); font-size:12px; cursor:pointer; }

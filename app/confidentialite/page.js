@@ -47,6 +47,9 @@ export default function Page() {
       <h2>Localisation (« À proximité »)</h2>
       <p>Cette fonction est facultative et désactivée par défaut. Si tu l’actives, ton navigateur te demande l’autorisation de te localiser. Nous enregistrons une position <b>arrondie à environ 1 km</b>, jamais ta position exacte. Les autres membres voient seulement une distance approximative (« à moins de X km »), et uniquement s’ils partagent aussi leur position et que tu as choisi de leur être visible (tous les membres, ou tes amis uniquement). Tu peux te masquer ou effacer ta position à tout moment depuis la page « À proximité ». Une position qui n’a pas été mise à jour depuis 30 jours n’est plus visible.</p>
 
+      <h2>Traduction automatique</h2>
+      <p>Quand tu cliques sur « Traduire » sous une publication, un commentaire, un message ou une annonce, le texte concerné est envoyé depuis ton appareil à un service de traduction tiers, MyMemory, qui le traite selon ses propres conditions. Rien n’est envoyé sans ton clic, et ce service ne reçoit pas les autres données de ton compte.</p>
+
       <h2>Mineurs</h2>
       <p>Cercle est réservé aux personnes de 16 ans et plus. Si tu penses qu’un mineur de moins de 16 ans s’est inscrit, signale-le à l’adresse de contact : le compte sera supprimé.</p>
 

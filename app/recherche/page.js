@@ -22,7 +22,7 @@ function Recherche({ user }) {
       if (mot.length < 2) { setMembres([]); setPosts([]); setFait(false); return }
       const motif = `%${mot.replace(/[%_,()]/g, ' ')}%`
       const [m, p] = await Promise.all([
-        supabase.from('profiles').select('id, nom, bio, avatar_url, verifie').ilike('nom', motif).neq('id', user.id).limit(10),
+        supabase.from('profiles').select('id, nom, bio, avatar_url, verifie, officiel').ilike('nom', motif).neq('id', user.id).limit(10),
         supabase.from('posts').select('id, texte, created_at, auteur, profiles!auteur(nom, avatar_url)').ilike('texte', motif).is('group_id', null).order('created_at', { ascending: false }).limit(20),
       ])
       setMembres(m.data || []); setPosts(p.data || []); setFait(true)
@@ -52,7 +52,7 @@ function Recherche({ user }) {
               <div className="resultat" key={m.id}>
                 <Avatar nom={m.nom} url={m.avatar_url} id={m.id} />
                 <div><Link className="lienmembre" href={'/membre/' + m.id}><b>{m.nom}</b></Link>{m.verifie && <Verifie />}{m.bio && <div className="muted">{m.bio}</div>}</div>
-                {l ? <span className="muted">{l.statut === 'accepte' ? 'Ami' : 'En attente'}</span> : <button className="sm" onClick={() => ajouter(m.id)}>Ajouter</button>}
+                {m.officiel ? <Link className="alt sm bouton" href={'/membre/' + m.id}>S’abonner</Link> : l ? <span className="muted">{l.statut === 'accepte' ? 'Ami' : 'En attente'}</span> : <button className="sm" onClick={() => ajouter(m.id)}>Ajouter</button>}
               </div>
             )
           })}

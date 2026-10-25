@@ -6,6 +6,9 @@ import { redimensionner } from '@/lib/image'
 import Avatar from '@/components/Avatar'
 import Stories from '@/components/Stories'
 import Texte from '@/components/Texte'
+import Traduire from '@/components/Traduire'
+import BandeauDefi from '@/components/BandeauDefi'
+import SuggestionsFil from '@/components/SuggestionsFil'
 import Verifie from '@/components/Verifie'
 
 const REACTIONS = [['coeur', '❤️'], ['rire', '😂'], ['wow', '😮'], ['triste', '😢'], ['pouce', '👍']]
@@ -99,6 +102,8 @@ export default function Fil({ user, groupId = null }) {
   return (
     <>
       {!groupId && <Stories user={user} />}
+      {!groupId && <BandeauDefi />}
+      {!groupId && <SuggestionsFil user={user} />}
       <form className="box" onSubmit={publier}>
         <textarea rows={3} value={texte} onChange={e => setTexte(e.target.value)} placeholder="Quoi de neuf ?" aria-label="Nouvelle publication" />
         {image && <div className="apercu"><img className="photo" src={image} alt="Aperçu" /><button type="button" className="alt sm" onClick={() => setImage(null)}>Retirer la photo</button></div>}
@@ -128,6 +133,7 @@ export default function Fil({ user, groupId = null }) {
               <div><Link className="lienmembre" href={'/membre/' + p.auteur}><b>{p.profiles?.nom || 'Membre'}</b></Link>{p.profiles?.verifie && <Verifie />}{p.partage_de && <span className="muted"> a partagé</span>}<div className="muted">{new Date(p.created_at).toLocaleString('fr-FR')}</div></div>
             </div>
             {p.texte && <p className="texte"><Texte t={p.texte} /></p>}
+            {p.texte && <Traduire texte={p.texte} />}
             {p.image_url && <img className="photo" src={p.image_url} alt="Photo publiée" />}
             {p.partage_de && (
               <div className="partage">
@@ -167,7 +173,7 @@ export default function Fil({ user, groupId = null }) {
             {coms.map(c => (
               <div className="com" key={c.id}>
                 <Avatar nom={c.profiles?.nom} url={c.profiles?.avatar_url} taille={30} id={c.auteur} />
-                <div className="bulle"><Link className="lienmembre" href={'/membre/' + c.auteur}><b>{c.profiles?.nom || 'Membre'}</b></Link>{c.profiles?.verifie && <Verifie />} {c.texte}</div>
+                <div className="bulle"><Link className="lienmembre" href={'/membre/' + c.auteur}><b>{c.profiles?.nom || 'Membre'}</b></Link>{c.profiles?.verifie && <Verifie />} {c.texte}{c.texte && <Traduire texte={c.texte} />}</div>
               </div>
             ))}
             <Commentaire postId={p.id} user={user} apres={charger} />

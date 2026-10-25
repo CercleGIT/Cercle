@@ -15,17 +15,23 @@ function Membre({ user }) {
   const [info, setInfo] = useState('')
   const [admin, setAdmin] = useState(false)
   const [createur, setCreateur] = useState(null)
+  const [abonne, setAbonne] = useState(false)
+  const [nbAbonnes, setNbAbonnes] = useState(0)
 
   const charger = useCallback(async () => {
-    const { data } = await supabase.from('profiles').select('id, nom, bio, avatar_url, derniere_activite, verifie').eq('id', id).maybeSingle()
+    const { data } = await supabase.from('profiles').select('id, nom, bio, avatar_url, derniere_activite, verifie, officiel').eq('id', id).maybeSingle()
     setP(data)
+    const { data: ab } = await supabase.from('abonnements').select('suivi').match({ abonne: user.id, suivi: id }).maybeSingle()
+    setAbonne(!!ab)
+    const { count } = await supabase.from('abonnements').select('abonne', { count: 'exact', head: true }).eq('suivi', id)
+    setNbAbonnes(count || 0)
     const { data: l } = await supabase.from('friendships').select('demandeur, destinataire, statut')
     setLien((l || []).find(x => [x.demandeur, x.destinataire].includes(id)) || null)
     const { data: cr } = await supabase.from('createurs').select('activite').eq('user_id', id).eq('actif', true).maybeSingle()
     setCreateur(cr)
     const { data: ps } = await supabase.from('posts').select('id, texte, image_url, created_at').eq('auteur', id).is('group_id', null).order('created_at', { ascending: false }).limit(20)
     setPosts(ps || [])
-  }, [id])
+  }, [id, user.id])
   useEffect(() => {
     charger()
     supabase.from('admins').select('user_id').eq('user_id', user.id).maybeSingle().then(({ data }) => setAdmin(!!data))
@@ -41,6 +47,17 @@ function Membre({ user }) {
     setInfo(error ? 'Blocage impossible.' : 'Membre bloqué.')
   }
 
+  async function basculerAbo() {
+    const q = supabase.from('abonnements')
+    const { error } = await (abonne ? q.delete().match({ abonne: user.id, suivi: id }) : q.insert({ abonne: user.id, suivi: id }))
+    setInfo(error ? 'Action impossible.' : abonne ? 'Tu ne suis plus ce compte.' : 'Tu es abonné(e) : tu seras prévenu(e) de ses publications.')
+    charger()
+  }
+  async function basculerOfficiel() {
+    const { error } = await supabase.from('profiles').update({ officiel: !p.officiel }).eq('id', id)
+    setInfo(error ? 'Action impossible.' : p.officiel ? 'Compte officiel retiré.' : 'Compte officiel activé.')
+    charger()
+  }
   const basculerCertif = async () => {
     const { error } = await supabase.from('profiles').update({ verifie: !p.verifie }).eq('id', id)
     setInfo(error ? 'Action impossible.' : p.verifie ? 'Certification retirée.' : 'Compte certifié.')
@@ -58,18 +75,21 @@ function Membre({ user }) {
         <div className="profil-tete">
           <Avatar nom={p.nom} url={p.avatar_url} taille={80} />
           <div>
-            <h2 style={{ margin: 0 }}>{p.nom} {p.verifie && <Verifie />} {enLigne && <span className="point" title="En ligne" />}</h2>
+            <h2 style={{ margin: 0 }}>{p.nom} {p.verifie && <Verifie />} {p.officiel && <span className="etiquette-role">Officiel</span>} {enLigne && <span className="point" title="En ligne" />}</h2>
             {p.bio && <p className="texte">{p.bio}</p>}
             {createur && <Link className="etiquette" href={'/createurs/' + id}>🎨 Créateur : {createur.activite} →</Link>}
           </div>
         </div>
         <div className="actions">
           {moi && <Link className="btnlink" href="/profil">Modifier mon profil</Link>}
-          {!moi && !lien && <button className="sm" onClick={ajouter}>Ajouter</button>}
+          {!moi && !p.officiel && !lien && <button className="sm" onClick={ajouter}>Ajouter</button>}
+          {!moi && p.officiel && <button className={abonne ? 'alt sm' : 'sm'} onClick={basculerAbo}>{abonne ? '✓ Abonné' : 'S’abonner'}</button>}
+          {p.officiel && <span className="muted">{nbAbonnes} abonné{nbAbonnes > 1 ? 's' : ''}</span>}
           {!moi && lien?.statut === 'en_attente' && <span className="muted">Demande en attente</span>}
           {!moi && lien?.statut === 'accepte' && <Link className="btnlink" href={'/messages?ami=' + id}>Écrire un message</Link>}
           {!moi && lien?.statut === 'accepte' && <><button className="alt sm" onClick={() => appeler(false)}>📞 Vocal</button><button className="alt sm" onClick={() => appeler(true)}>🎥 Vidéo</button></>}
-          {!moi && <button className="alt sm droite" onClick={bloquer}>Bloquer</button>}
+          {!moi && !p.officiel && <button className="alt sm droite" onClick={bloquer}>Bloquer</button>}
+          {admin && <button className="alt sm" onClick={basculerOfficiel}>{p.officiel ? 'Retirer « compte officiel »' : '⭐ Marquer comme compte officiel'}</button>}
           {admin && <button className="alt sm" onClick={basculerCertif}>{p.verifie ? 'Retirer la certification' : '✓ Certifier ce compte'}</button>}
         </div>
         {info && <p className="msg ok" role="status">{info}</p>}
