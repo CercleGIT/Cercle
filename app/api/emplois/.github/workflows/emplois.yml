@@ -1,0 +1,13 @@
+name: Emplois et opportunités
+on:
+  schedule:
+    - cron: '30 */2 * * *'
+  workflow_dispatch:
+jobs:
+  publier:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          curl --fail-with-body -sS \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            "${{ secrets.SITE_URL }}/api/emplois"
