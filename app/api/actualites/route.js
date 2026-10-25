@@ -19,7 +19,7 @@ function lienDe(it) {
 
 async function recuperer(source) {
   try {
-    const r = await fetch(source.url, { signal: AbortSignal.timeout(8000), headers: { 'User-Agent': 'CercleBot/1.0 (agrégateur d’actualités)', Accept: 'application/rss+xml, application/xml, text/xml' } })
+    const r = await fetch(source.url, { signal: AbortSignal.timeout(8000), headers: { 'User-Agent': 'CercleBot/1.0 (agregateur d actualites)', Accept: 'application/rss+xml, application/xml, text/xml' } })
     if (!r.ok) return { source, articles: [], erreur: 'HTTP ' + r.status }
     const doc = parseur.parse(await r.text())
     const brut = doc?.rss?.channel?.item || doc?.feed?.entry || doc?.['rdf:RDF']?.item || []
