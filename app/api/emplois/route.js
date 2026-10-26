@@ -20,8 +20,8 @@ const liste = v => String(v || '').toLowerCase().split(',').map(s => s.trim()).f
 
 const JEUNE = /\b(intern|internship|stagiaire|junior|entry[- ]level|graduate|trainee|apprentice|apprenticeship|student|volunteer|fellowship|scholarship|bourse|youth|jeune|erasmus|werkstudent|praktikum|ausbildung|stage)\b|étudiant|etudiant|alternance|volontariat|apprenti/i
 const ZONE = /europe|emea|usa|u\.s\.|united states|north america|anywhere|worldwide/i
-const MAX_JOURS = 7
-
+const SENIOR = /\b(senior|staff|principal|director|head of|vp|chief)\b/i
+const HORS = /\b(australia|apac|india|japan|singapore|brazil|latam|latin america)\b/i
 const detecterPays = t => {
   for (const [nom, re] of Object.entries(PAYS)) if (re.test(t || '')) return nom
   return null
@@ -118,7 +118,7 @@ async function lancer(req) {
   const retenus = resultats.flatMap(r => r.articles)
     .filter(a => a.date > limite)
     .filter(a => !a.region || ZONE.test(a.region))
-    .filter(a => a.jeunes || JEUNE.test(a.titre + ' ' + a.resume))
+    .filter(a => a.jeunes || (JEUNE.test(a.titre + ' ' + a.tags) && !SENIOR.test(a.titre) && !HORS.test(a.titre + ' ' + a.region))) 
     .filter(a => !paysVoulus.length || paysVoulus.includes(a.pays))
     .filter(a => !domVoulus.length || domVoulus.some(d => DOMAINES[d].test(a.titre + ' ' + a.resume + ' ' + a.tags)))
     .sort((a, b) => b.date - a.date)
