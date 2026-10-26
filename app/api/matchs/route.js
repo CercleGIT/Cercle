@@ -52,7 +52,7 @@ async function lancer(req) {
   const reponses = []
   for (const x of demandes) {
     reponses.push(await evenements(cle, x.jour, LIGUES[x.nom]))
-    await new Promise(r => setTimeout(r, 300))
+    await new Promise(r => setTimeout(r, 1000))
   }
   const vus = new Set()
   const matchs = []
