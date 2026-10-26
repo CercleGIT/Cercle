@@ -118,7 +118,7 @@ async function lancer(req) {
   const retenus = resultats.flatMap(r => r.articles)
     .filter(a => a.date > limite)
     .filter(a => !a.region || ZONE.test(a.region))
-    .filter(a => a.jeunes || (JEUNE.test(a.titre + ' ' + a.tags) && !SENIOR.test(a.titre) && !HORS.test(a.titre + ' ' + a.region))) 
+    .filter(a => a.jeunes || JEUNE.test(a.titre + ' ' + a.resume)) 
     .filter(a => !paysVoulus.length || paysVoulus.includes(a.pays))
     .filter(a => !domVoulus.length || domVoulus.some(d => DOMAINES[d].test(a.titre + ' ' + a.resume + ' ' + a.tags)))
     .sort((a, b) => b.date - a.date)
