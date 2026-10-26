@@ -22,6 +22,7 @@ const JEUNE = /\b(intern|internship|stagiaire|junior|entry[- ]level|graduate|tra
 const ZONE = /europe|emea|usa|u\.s\.|united states|north america|anywhere|worldwide/i
 const SENIOR = /\b(senior|staff|principal|director|head of|vp|chief)\b/i
 const HORS = /\b(australia|apac|india|japan|singapore|brazil|latam|latin america)\b/i
+const MAX_JOURS = 7
 const detecterPays = t => {
   for (const [nom, re] of Object.entries(PAYS)) if (re.test(t || '')) return nom
   return null
