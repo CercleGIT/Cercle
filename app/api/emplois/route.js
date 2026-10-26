@@ -27,6 +27,21 @@ const detecterPays = t => {
   return null
 }
 
+// Image d'une offre : enclosure, media:content, media:thumbnail, ou premiere image du texte
+const estImage = (u, type) => /^https?:\/\//.test(u || '') && (/^image\//.test(type || '') || /\.(jpe?g|png|webp|gif)(\?|$)/i.test(u))
+function imageDe(it) {
+  const enc = un(it.enclosure)
+  if (enc && estImage(enc['@_url'], enc['@_type'])) return decoder(enc['@_url'].trim())
+  const mc = un(it['media:content'])
+  if (mc && estImage(mc['@_url'], mc['@_type'] || (mc['@_medium'] === 'image' ? 'image/jpeg' : ''))) return decoder(mc['@_url'].trim())
+  const mt = un(it['media:thumbnail'])
+  if (mt && /^https?:\/\//.test(mt['@_url'] || '')) return decoder(mt['@_url'].trim())
+  const html = decoder(texteDe(it['content:encoded']) + ' ' + texteDe(it.description))
+  const m = html.match(/<img[^>]+src=["']([^"']+)["']/i)
+  const u = m ? decoder(m[1]).trim() : ''
+  return /^https?:\/\//.test(u) ? u : ''
+}
+
 function lienDe(it) {
   const l = Array.isArray(it.link) ? (it.link.find(x => x && x['@_rel'] === 'alternate') || it.link[0]) : it.link
   return decoder((typeof l === 'object' && l ? (l['@_href'] || texteDe(l)) : texteDe(l)).trim())
@@ -48,6 +63,7 @@ async function recuperer(source) {
           pays: source.pays || detecterPays(lieu),
           titre: nettoyer(j.title) + (j.company_name ? ' - ' + nettoyer(j.company_name) : ''),
           lien: String(j.url || '').trim(),
+          image: '',
           region: '',
           tags: (j.tags || []).join(' '),
           resume: nettoyer(j.description).slice(0, 600),
@@ -67,6 +83,7 @@ async function recuperer(source) {
         pays: source.pays || detecterPays(region),
         titre: nettoyer(un(it.title)),
         lien: lienDe(it),
+        image: imageDe(it),
         region,
         tags: nettoyer(it.category),
         resume: nettoyer(it.description || it.summary || it['content:encoded'] || it.content),
@@ -115,7 +132,11 @@ async function lancer(req) {
 
   const noms = SOURCES_EMPLOIS.map(s => s.nom)
   const { data: dernier } = await sb.from('actualites_publiees').select('source').in('source', noms).order('publie_le', { ascending: false }).limit(1).maybeSingle()
-  const choix = neufs.find(a => a.source !== dernier?.source) || neufs[0]
+  // On prefere une offre avec image, d'une source differente de la derniere publication
+  const choix = neufs.find(a => a.image && a.source !== dernier?.source)
+    || neufs.find(a => a.image)
+    || neufs.find(a => a.source !== dernier?.source)
+    || neufs[0]
 
   let resume = choix.resume
   if (resume.length > 280) resume = resume.slice(0, 277).trimEnd() + '…'
@@ -124,12 +145,17 @@ async function lancer(req) {
     '\n\n📍 ' + choix.zone + '\nSource : ' + choix.source + '\n' + choix.lien
 
   const debut = new Date(Date.now() - 5000).toISOString()
-  const { data: post, error } = await sb.from('posts').insert({ auteur: compte.id, texte }).select('id').single()
+  let ligne = { auteur: compte.id, texte }
+  if (choix.image) ligne.image_url = choix.image
+  let { data: post, error } = await sb.from('posts').insert(ligne).select('id').single()
+  if (error && choix.image) {
+    ;({ data: post, error } = await sb.from('posts').insert({ auteur: compte.id, texte }).select('id').single())
+  }
   if (error) return NextResponse.json({ erreur: 'Publication impossible : ' + error.message }, { status: 500 })
   await sb.from('actualites_publiees').insert({ lien: choix.lien, source: choix.source, titre: choix.titre, post_id: post.id })
   await sb.from('notifications').delete().eq('texte', compte.nom + ' a publié une nouvelle publication.').gte('created_at', debut)
 
-  return NextResponse.json({ publie: true, titre: choix.titre, source: choix.source, filtres, sources: etat })
+  return NextResponse.json({ publie: true, titre: choix.titre, source: choix.source, image: !!choix.image, filtres, sources: etat })
 }
 
 export async function GET(req) { return lancer(req) }
