@@ -158,5 +158,9 @@ async function lancer(req) {
   return NextResponse.json({ publie: true, titre: choix.titre, source: choix.source, image: !!choix.image, filtres, sources: etat })
 }
 
-export async function GET(req) { return lancer(req) }
-export async function POST(req) { return lancer(req) }
+async function sur(req) {
+  try { return await lancer(req) }
+  catch (e) { return NextResponse.json({ erreur: 'Plantage : ' + String(e?.stack || e?.message || e).slice(0, 600) }, { status: 500 }) }
+}
+export async function GET(req) { return sur(req) }
+export async function POST(req) { return sur(req) }
