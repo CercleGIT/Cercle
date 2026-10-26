@@ -12,8 +12,7 @@ async function evenements(cle, jour, idLigue) {
   try {
     const r = await fetch('https://www.thesportsdb.com/api/v1/json/' + cle + '/eventsday.php?d=' + jour + '&l=' + idLigue, {
       signal: AbortSignal.timeout(8000),
-      headers: { 'User-Agent': 'CercleBot/1.0 (programme des matchs)', Accept: 'application/json' },
-    })
+    headers: { 'User-Agent': 'Mozilla/5.0 (compatible; CercleBot/1.0)', Accept: 'application/json' },    })
     if (!r.ok) return { erreur: 'HTTP ' + r.status, events: [] }
     const d = await r.json()
     return { events: d.events || [] }
@@ -29,7 +28,7 @@ async function lancer(req) {
   if (!process.env.SUPABASE_SERVICE_ROLE_KEY) return NextResponse.json({ erreur: 'SUPABASE_SERVICE_ROLE_KEY manquante.' }, { status: 500 })
 
   const fuseau = process.env.MATCHS_FUSEAU || 'Africa/Porto-Novo'
-  const cle = process.env.SPORTSDB_KEY || '3'
+  const cle = process.env.SPORTSDB_KEY || '123'
   const choisies = liste(process.env.MATCHS_LIGUES).filter(n => LIGUES[n])
   const noms = choisies.length ? choisies : PAR_DEFAUT
 
@@ -50,8 +49,11 @@ async function lancer(req) {
   const d0 = new Date().toISOString().slice(0, 10)
   const d1 = new Date(Date.now() + 86400000).toISOString().slice(0, 10)
   const demandes = noms.flatMap(n => [d0, d1].map(j => ({ nom: n, jour: j })))
-  const reponses = await Promise.all(demandes.map(x => evenements(cle, x.jour, LIGUES[x.nom])))
-
+  const reponses = []
+  for (const x of demandes) {
+    reponses.push(await evenements(cle, x.jour, LIGUES[x.nom]))
+    await new Promise(r => setTimeout(r, 300))
+  }
   const vus = new Set()
   const matchs = []
   const etat = {}
