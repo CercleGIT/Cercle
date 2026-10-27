@@ -12,7 +12,8 @@ async function evenements(cle, jour, idLigue) {
   try {
     const r = await fetch('https://www.thesportsdb.com/api/v1/json/' + cle + '/eventsday.php?d=' + jour + '&l=' + idLigue, {
       signal: AbortSignal.timeout(8000),
-    headers: { 'User-Agent': 'Mozilla/5.0 (compatible; CercleBot/1.0)', Accept: 'application/json' },    })
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; CercleBot/1.0)', Accept: 'application/json' },
+    })
     if (!r.ok) return { erreur: 'HTTP ' + r.status, events: [] }
     const d = await r.json()
     return { events: d.events || [] }
@@ -54,6 +55,7 @@ async function lancer(req) {
     reponses.push(await evenements(cle, x.jour, LIGUES[x.nom]))
     await new Promise(r => setTimeout(r, 1000))
   }
+
   const vus = new Set()
   const matchs = []
   const etat = {}
@@ -86,13 +88,17 @@ async function lancer(req) {
   texte += '\n\nSource : TheSportsDB'
 
   const debut = new Date(Date.now() - 5000).toISOString()
-  const { data: post, error } = await sb.from('posts').insert({ auteur: compte.id, texte }).select('id').single()
+  const { data: post, error } = await sb.from('posts').insert({ auteur: compte.id, texte, chaine: 'sports' }).select('id').single()
   if (error) return NextResponse.json({ erreur: 'Publication impossible : ' + error.message }, { status: 500 })
   await sb.from('actualites_publiees').insert({ lien: cleJour, source: 'Programme des matchs', titre: 'Programme du ' + aujourdhui, post_id: post.id })
   await sb.from('notifications').delete().eq('texte', compte.nom + ' a publié une nouvelle publication.').gte('created_at', debut)
 
-  return NextResponse.json({ publie: true, jour: aujourdhui, matchs: gardes.length, ligues: etat })
+  return NextResponse.json({ publie: true, jour: aujourdhui, matchs: gardes.length, chaine: 'sports', ligues: etat })
 }
 
-export async function GET(req) { return lancer(req) }
-export async function POST(req) { return lancer(req) }
+async function sur(req) {
+  try { return await lancer(req) }
+  catch (e) { return NextResponse.json({ erreur: 'Plantage : ' + String(e?.stack || e?.message || e).slice(0, 600) }, { status: 500 }) }
+}
+export async function GET(req) { return sur(req) }
+export async function POST(req) { return sur(req) }
