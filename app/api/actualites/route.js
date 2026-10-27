@@ -12,6 +12,21 @@ const nettoyer = h => texteDe(h).replace(/<[^>]*>/g, ' ').replace(/&nbsp;/g, ' '
   .replace(/&#0?39;|&apos;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/\s+/g, ' ').trim()
 const un = v => (Array.isArray(v) ? v[0] : v)
 
+// Image d'un article : enclosure, media:content, media:thumbnail, ou premiere image du texte
+const estImage = (u, type) => /^https?:\/\//.test(u || '') && (/^image\//.test(type || '') || /\.(jpe?g|png|webp|gif)(\?|$)/i.test(u))
+function imageDe(it) {
+  const enc = un(it.enclosure)
+  if (enc && estImage(enc['@_url'], enc['@_type'])) return enc['@_url'].trim()
+  const mc = un(it['media:content'])
+  if (mc && estImage(mc['@_url'], mc['@_type'] || (mc['@_medium'] === 'image' ? 'image/jpeg' : ''))) return mc['@_url'].trim()
+  const mt = un(it['media:thumbnail'])
+  if (mt && /^https?:\/\//.test(mt['@_url'] || '')) return mt['@_url'].trim()
+  const html = texteDe(it['content:encoded']) + ' ' + texteDe(it.description)
+  const m = html.match(/<img[^>]+src=["']([^"']+)["']/i)
+  const u = m ? m[1].replace(/&amp;/g, '&').trim() : ''
+  return /^https?:\/\//.test(u) ? u : ''
+}
+
 function lienDe(it) {
   const l = Array.isArray(it.link) ? (it.link.find(x => x && x['@_rel'] === 'alternate') || it.link[0]) : it.link
   return (typeof l === 'object' && l ? (l['@_href'] || texteDe(l)) : texteDe(l)).trim()
@@ -19,16 +34,16 @@ function lienDe(it) {
 
 async function recuperer(source) {
   try {
-    const r = await fetch(source.url, { signal: AbortSignal.timeout(8000), headers: { 'User-Agent': 'CercleBot/1.0 (agrégateur d’actualités)', Accept: 'application/rss+xml, application/xml, text/xml' } })
+    const r = await fetch(source.url, { signal: AbortSignal.timeout(8000), headers: { 'User-Agent': 'CercleBot/1.0 (agregateur d actualites)', Accept: 'application/rss+xml, application/xml, text/xml' } })
     if (!r.ok) return { source, articles: [], erreur: 'HTTP ' + r.status }
     const doc = parseur.parse(await r.text())
     const brut = doc?.rss?.channel?.item || doc?.feed?.entry || doc?.['rdf:RDF']?.item || []
     const liste = Array.isArray(brut) ? brut : [brut]
     const articles = liste.map(it => ({
       source: source.nom,
-      categorie: source.categorie || 'actualites',
       titre: nettoyer(un(it.title)),
       lien: lienDe(it),
+      image: imageDe(it),
       resume: nettoyer(it.description || it.summary || it['content:encoded'] || it.content),
       date: Date.parse(texteDe(it.pubDate || it.published || it.updated || it['dc:date'])) || 0,
     })).filter(a => a.titre && /^https?:\/\//.test(a.lien))
@@ -77,7 +92,11 @@ async function lancer(req) {
   if (!neufs.length) return NextResponse.json({ publie: false, raison: 'Rien de nouveau.', sources: etat })
 
   const { data: dernier } = await sb.from('actualites_publiees').select('source').order('publie_le', { ascending: false }).limit(1).maybeSingle()
-  const choix = neufs.find(a => a.source !== dernier?.source) || neufs[0]
+  // On prefere un article avec photo, d'une source differente de la derniere publication
+  const choix = neufs.find(a => a.image && a.source !== dernier?.source)
+    || neufs.find(a => a.image)
+    || neufs.find(a => a.source !== dernier?.source)
+    || neufs[0]
 
   let resume = ''
   if (process.env.ANTHROPIC_API_KEY) { try { resume = await resumerIA(choix) } catch {} }
@@ -86,13 +105,18 @@ async function lancer(req) {
   const texte = '📰 ' + choix.titre + (resume && resume !== choix.titre ? '\n\n' + resume : '') + '\n\nSource : ' + choix.source + '\n' + choix.lien
 
   const debut = new Date(Date.now() - 5000).toISOString()
-  const { data: post, error } = await sb.from('posts').insert({ auteur: compte.id, texte, categorie: choix.categorie || 'actualites' }).select('id').single()
+  let ligne = { auteur: compte.id, texte, chaine: 'actualites' }
+  if (choix.image) ligne.image_url = choix.image
+  let { data: post, error } = await sb.from('posts').insert(ligne).select('id').single()
+  if (error && choix.image) {
+    ;({ data: post, error } = await sb.from('posts').insert({ auteur: compte.id, texte, chaine: 'actualites' }).select('id').single())
+  }
   if (error) return NextResponse.json({ erreur: 'Publication impossible : ' + error.message }, { status: 500 })
   await sb.from('actualites_publiees').insert({ lien: choix.lien, source: choix.source, titre: choix.titre, post_id: post.id })
   // Les publications automatiques ne déclenchent pas de notification chez les abonnés (trop fréquent)
   await sb.from('notifications').delete().eq('texte', compte.nom + ' a publié une nouvelle publication.').gte('created_at', debut)
 
-  return NextResponse.json({ publie: true, titre: choix.titre, source: choix.source, ia: !!process.env.ANTHROPIC_API_KEY, sources: etat })
+  return NextResponse.json({ publie: true, titre: choix.titre, source: choix.source, image: !!choix.image, chaine: 'actualites', ia: !!process.env.ANTHROPIC_API_KEY, sources: etat })
 }
 
 export async function GET(req) { return lancer(req) }
