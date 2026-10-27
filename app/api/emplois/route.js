@@ -23,8 +23,7 @@ const ZONE = /europe|emea|usa|u\.s\.|united states|north america|anywhere|worldw
 const MAX_JOURS = 7
 const SENIOR = /\b(senior|staff|principal|director|head of|vp|chief)\b/i
 const HORS = /\b(australia|apac|india|japan|singapore|brazil|latam|latin america)\b/i
-const OPP = /europe|european|erasmus|america|united states|\busa\b|u\.s\.|\buk\b|united kingdom|germany|france|spain|italy|netherlands|ireland|poland|belgium|switzerland|worldwide|global|international|all countries|any country/i
-
+const OPP = /europe|european|erasmus|africa|african|afrique|nigeria|ghana|kenya|benin|togo|senegal|cameroon|ivory coast|america|united states|\busa\b|u\.s\.|\buk\b|united kingdom|germany|france|spain|italy|netherlands|ireland|poland|belgium|switzerland|worldwide|global|international|all countries|any country/i
 const detecterPays = t => {
   for (const [nom, re] of Object.entries(PAYS)) if (re.test(t || '')) return nom
   return null
