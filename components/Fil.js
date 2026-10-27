@@ -9,8 +9,6 @@ import Texte from '@/components/Texte'
 import Traduire from '@/components/Traduire'
 import BandeauDefi from '@/components/BandeauDefi'
 import SuggestionsFil from '@/components/SuggestionsFil'
-import BarreRubriques from '@/components/BarreRubriques'
-import { SECTIONS } from '@/lib/sections'
 import Verifie from '@/components/Verifie'
 
 const REACTIONS = [['coeur', '❤️'], ['rire', '😂'], ['wow', '😮'], ['triste', '😢'], ['pouce', '👍']]
@@ -32,7 +30,7 @@ function Commentaire({ postId, user, apres }) {
   )
 }
 
-export default function Fil({ user, groupId = null, categorie = null }) {
+export default function Fil({ user, groupId = null, chaine = null }) {
   const [posts, setPosts] = useState([])
   const [texte, setTexte] = useState('')
   const [image, setImage] = useState(null)
@@ -41,11 +39,13 @@ export default function Fil({ user, groupId = null, categorie = null }) {
 
   const charger = useCallback(async () => {
     let q = supabase.from('posts').select(SELECTION).order('created_at', { ascending: false }).limit(50)
-    q = groupId ? q.eq('group_id', groupId) : categorie ? q.is('group_id', null).eq('categorie', categorie) : q.is('group_id', null).is('categorie', null)
+    if (chaine) q = q.eq('chaine', chaine)
+    else if (groupId) q = q.eq('group_id', groupId)
+    else q = q.is('group_id', null).is('chaine', null)
     const { data, error } = await q
     if (error) setInfo('Impossible de charger les publications.')
     else setPosts(data)
-  }, [groupId, categorie])
+  }, [groupId, chaine])
   useEffect(() => { charger() }, [charger])
 
   async function choisir(e) {
@@ -57,7 +57,7 @@ export default function Fil({ user, groupId = null, categorie = null }) {
     const options = sondage ? sondage.map(o => o.trim()).filter(Boolean) : null
     if (options && options.length < 2) return setInfo('Un sondage a besoin d’au moins 2 choix.')
     if (!texte.trim() && !image && !options) return
-    const { error } = await supabase.from('posts').insert({ auteur: user.id, texte: texte.trim(), image_url: image, sondage: options, group_id: groupId, categorie: groupId ? null : categorie })
+    const { error } = await supabase.from('posts').insert({ auteur: user.id, texte: texte.trim(), image_url: image, sondage: options, group_id: groupId })
     if (error) return setInfo('Publication impossible.')
     setTexte(''); setImage(null); setSondage(null); setInfo(''); charger()
   }
@@ -103,15 +103,11 @@ export default function Fil({ user, groupId = null, categorie = null }) {
 
   return (
     <>
-      {!groupId && <BarreRubriques actif={categorie} />}
-      {categorie && SECTIONS[categorie] && (
-        <div className="box"><h2>{SECTIONS[categorie].emoji} {SECTIONS[categorie].nom}</h2><p className="muted">{SECTIONS[categorie].description}</p></div>
-      )}
-      {!groupId && !categorie && <Stories user={user} />}
-      {!groupId && !categorie && <BandeauDefi />}
-      {!groupId && !categorie && <SuggestionsFil user={user} />}
-      <form className="box" onSubmit={publier}>
-        <textarea rows={3} value={texte} onChange={e => setTexte(e.target.value)} placeholder={categorie && SECTIONS[categorie] ? SECTIONS[categorie].placeholder : 'Quoi de neuf ?'} aria-label="Nouvelle publication" />
+      {!groupId && !chaine && <Stories user={user} />}
+      {!groupId && !chaine && <BandeauDefi />}
+      {!groupId && !chaine && <SuggestionsFil user={user} />}
+      <form className="box" onSubmit={publier} style={chaine ? { display: 'none' } : undefined}>
+        <textarea rows={3} value={texte} onChange={e => setTexte(e.target.value)} placeholder="Quoi de neuf ?" aria-label="Nouvelle publication" />
         {image && <div className="apercu"><img className="photo" src={image} alt="Aperçu" /><button type="button" className="alt sm" onClick={() => setImage(null)}>Retirer la photo</button></div>}
         {sondage && (
           <div className="sondage">
@@ -171,7 +167,7 @@ export default function Fil({ user, groupId = null, categorie = null }) {
               {REACTIONS.map(([k, e]) => <button key={k} className={ma?.emoji === k ? 'moi' : ''} onClick={() => reagir(p, k)} aria-label={'Réagir ' + k}>{e}</button>)}
             </div>
             <div className="actions">
-              {!groupId && !categorie && <button className="alt sm" onClick={() => partager(p)}>↗ Partager</button>}
+              {!groupId && <button className="alt sm" onClick={() => partager(p)}>↗ Partager</button>}
               {p.auteur === user.id
                 ? <><button className="alt sm droite" onClick={() => modifier(p)}>Modifier</button><button className="alt sm" onClick={() => supprimer(p.id)}>Supprimer</button></>
                 : <><button className="alt sm droite" onClick={() => signaler(p.id)}>Signaler</button><button className="alt sm" onClick={() => bloquer(p)}>Bloquer</button></>}
