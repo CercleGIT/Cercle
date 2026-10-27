@@ -269,3 +269,10 @@ select { width:100%; font:inherit; color:var(--ink); background:var(--bg); borde
 
 /* Liens dans les publications */
 .lien-externe { color:var(--brand); text-decoration:underline; overflow-wrap:anywhere; }
+
+/* Rubriques */
+.rubriques { display:flex; gap:8px; overflow-x:auto; margin-bottom:12px; padding-bottom:4px; }
+.rubrique { flex:none; padding:8px 14px; border:1px solid var(--line); border-radius:20px; background:var(--card); color:var(--ink); font-size:14px; font-weight:700; text-decoration:none; }
+.rubrique.actif { background:var(--brand); border-color:var(--brand); color:#fff; }
+/* Saisie du code de confirmation */
+.champ-code { font-size:28px; letter-spacing:8px; text-align:center; }

@@ -23,6 +23,9 @@ const FORMES = {
   micro: <><rect x="9" y="3" width="6" height="11" rx="3" /><path d="M5 11a7 7 0 0 0 14 0M12 18v3" /></>,
   envoyer: <path d="M3 11l18-8-8 18-2-8-8-2z" />,
   retour: <path d="M15 5l-7 7 7 7" />,
+  journal: <><rect x="4" y="4" width="16" height="16" rx="2" /><path d="M8 9h8M8 13h8M8 17h5" /></>,
+  mallette: <><rect x="3" y="7" width="18" height="13" rx="2" /><path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2M3 13h18" /></>,
+  ballon: <><circle cx="12" cy="12" r="9" /><path d="M12 3v18M3 12h18M5.5 5.5c3 2.5 3 10.5 0 13M18.5 5.5c-3 2.5-3 10.5 0 13" /></>,
   fermer: <path d="M6 6l12 12M18 6L6 18" />,
 }
 
