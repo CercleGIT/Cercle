@@ -20,9 +20,11 @@ const liste = v => String(v || '').toLowerCase().split(',').map(s => s.trim()).f
 
 const JEUNE = /\b(intern|internship|stagiaire|junior|entry[- ]level|graduate|trainee|apprentice|apprenticeship|student|volunteer|fellowship|scholarship|bourse|youth|jeune|erasmus|werkstudent|praktikum|ausbildung|stage)\b|étudiant|etudiant|alternance|volontariat|apprenti/i
 const ZONE = /europe|emea|usa|u\.s\.|united states|north america|anywhere|worldwide/i
+const MAX_JOURS = 7
 const SENIOR = /\b(senior|staff|principal|director|head of|vp|chief)\b/i
 const HORS = /\b(australia|apac|india|japan|singapore|brazil|latam|latin america)\b/i
-const MAX_JOURS = 7
+const OPP = /europe|european|erasmus|america|united states|\busa\b|u\.s\.|\buk\b|united kingdom|germany|france|spain|italy|netherlands|ireland|poland|belgium|switzerland|worldwide|global|international|all countries|any country/i
+
 const detecterPays = t => {
   for (const [nom, re] of Object.entries(PAYS)) if (re.test(t || '')) return nom
   return null
@@ -86,7 +88,7 @@ async function recuperer(source) {
         lien: lienDe(it),
         image: imageDe(it),
         region,
-        tags: nettoyer(it.category),
+        tags: [].concat(it.category || []).map(nettoyer).join(' '),
         resume: nettoyer(it.description || it.summary || it['content:encoded'] || it.content),
         date: Date.parse(texteDe(it.pubDate || it.published || it.updated || it['dc:date'])) || 0,
       }
@@ -119,9 +121,9 @@ async function lancer(req) {
   const retenus = resultats.flatMap(r => r.articles)
     .filter(a => a.date > limite)
     .filter(a => !a.region || ZONE.test(a.region))
-    .filter(a => a.jeunes || (JEUNE.test(a.titre + ' ' + (a.tags || '')) && !SENIOR.test(a.titre) && !HORS.test(a.titre + ' ' + (a.region || '')))) 
+    .filter(a => a.jeunes ? OPP.test(a.titre + ' ' + a.resume + ' ' + (a.tags || '')) : (JEUNE.test(a.titre + ' ' + (a.tags || '')) && !SENIOR.test(a.titre) && !HORS.test(a.titre + ' ' + (a.region || ''))))
     .filter(a => !paysVoulus.length || paysVoulus.includes(a.pays))
-    .filter(a => !domVoulus.length || domVoulus.some(d => DOMAINES[d].test(a.titre + ' ' + a.resume + ' ' + a.tags)))
+    .filter(a => !domVoulus.length || domVoulus.some(d => DOMAINES[d].test(a.titre + ' ' + a.resume + ' ' + (a.tags || ''))))
     .sort((a, b) => b.date - a.date)
     .slice(0, 60)
   if (!retenus.length) return NextResponse.json({ publie: false, raison: 'Aucune offre correspondante.', filtres, sources: etat })
@@ -146,17 +148,17 @@ async function lancer(req) {
     '\n\n📍 ' + choix.zone + '\nSource : ' + choix.source + '\n' + choix.lien
 
   const debut = new Date(Date.now() - 5000).toISOString()
-  let ligne = { auteur: compte.id, texte }
+  let ligne = { auteur: compte.id, texte, chaine: 'opportunites' }
   if (choix.image) ligne.image_url = choix.image
   let { data: post, error } = await sb.from('posts').insert(ligne).select('id').single()
   if (error && choix.image) {
-    ;({ data: post, error } = await sb.from('posts').insert({ auteur: compte.id, texte }).select('id').single())
+    ;({ data: post, error } = await sb.from('posts').insert({ auteur: compte.id, texte, chaine: 'opportunites' }).select('id').single())
   }
   if (error) return NextResponse.json({ erreur: 'Publication impossible : ' + error.message }, { status: 500 })
   await sb.from('actualites_publiees').insert({ lien: choix.lien, source: choix.source, titre: choix.titre, post_id: post.id })
   await sb.from('notifications').delete().eq('texte', compte.nom + ' a publié une nouvelle publication.').gte('created_at', debut)
 
-  return NextResponse.json({ publie: true, titre: choix.titre, source: choix.source, image: !!choix.image, filtres, sources: etat })
+  return NextResponse.json({ publie: true, titre: choix.titre, source: choix.source, image: !!choix.image, chaine: 'opportunites', filtres, sources: etat })
 }
 
 async function sur(req) {
