@@ -16,7 +16,7 @@ const PRINCIPAL = [
 ]
 // Menu « Plus »
 const PLUS = [
-  ['/actualites', 'Actualités', 'journal'], ['/opportunites', 'Opportunités', 'mallette'], ['/sports', 'Sports', 'ballon'],
+  ['/chaines', 'Chaînes', 'etoile'],
   ['/groupes', 'Groupes', 'groupe'], ['/createurs', 'Créateurs', 'etoile'], ['/proximite', 'À proximité', 'position'],
   ['/evenements', 'Événements', 'calendrier'], ['/jeux', 'Jeux', 'jeux', true], ['/recherche', 'Recherche', 'recherche'],
   ['/inviter', 'Inviter', 'cadeau'], ['/profil', 'Profil', 'profil'], ['/parametres', 'Paramètres', 'reglages'],
