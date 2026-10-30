@@ -3,7 +3,7 @@ import { useState } from 'react'
 import Shell from '@/components/Shell'
 import Fil from '@/components/Fil'
 
-const CHAINES = [['actualites', '📰 Actualités'], ['opportunites', '💼 Opportunités'], ['sports', '⚽ Sports']]
+const CHAINES = [['actualites', '📰 Actualités'], ['opportunites', '💼 Opportunités'], ['sports', '⚽ Sports'], ['videos', '🎬 Vidéos']]
 
 function Contenu({ user }) {
   const [c, setC] = useState('actualites')
