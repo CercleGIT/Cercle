@@ -1,0 +1,13 @@
+name: Vidéos et documentaires
+on:
+  schedule:
+    - cron: '15 */6 * * *'
+  workflow_dispatch:
+jobs:
+  publier:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          curl --fail-with-body -sS \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            "${{ secrets.SITE_URL }}/api/videos"
