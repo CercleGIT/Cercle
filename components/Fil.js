@@ -7,7 +7,6 @@ import Avatar from '@/components/Avatar'
 import Stories from '@/components/Stories'
 import Texte from '@/components/Texte'
 import Traduire from '@/components/Traduire'
-import BandeauDefi from '@/components/BandeauDefi'
 import SuggestionsFil from '@/components/SuggestionsFil'
 import Verifie from '@/components/Verifie'
 
@@ -104,7 +103,6 @@ export default function Fil({ user, groupId = null, chaine = null }) {
   return (
     <>
       {!groupId && !chaine && <Stories user={user} />}
-      {!groupId && !chaine && <BandeauDefi />}
       {!groupId && !chaine && <SuggestionsFil user={user} />}
       <form className="box" onSubmit={publier} style={chaine ? { display: 'none' } : undefined}>
         <textarea rows={3} value={texte} onChange={e => setTexte(e.target.value)} placeholder="Quoi de neuf ?" aria-label="Nouvelle publication" />
