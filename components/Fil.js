@@ -35,6 +35,7 @@ export default function Fil({ user, groupId = null, chaine = null }) {
   const [image, setImage] = useState(null)
   const [sondage, setSondage] = useState(null)
   const [info, setInfo] = useState('')
+  const [lives, setLives] = useState([])
 
   const charger = useCallback(async () => {
     let q = supabase.from('posts').select(SELECTION).order('created_at', { ascending: false }).limit(50)
@@ -46,6 +47,30 @@ export default function Fil({ user, groupId = null, chaine = null }) {
     else setPosts(data)
   }, [groupId, chaine])
   useEffect(() => { charger() }, [charger])
+
+  const chargerLives = useCallback(async () => {
+    if (groupId || chaine) return
+    const depuis = new Date(Date.now() - 4 * 3600 * 1000).toISOString()
+    const { data } = await supabase
+      .from('lives')
+      .select('id, user_id, titre, room, debut')
+      .eq('en_cours', true)
+      .gte('debut', depuis)
+      .neq('user_id', user.id)
+      .order('debut', { ascending: false })
+      .limit(10)
+    if (!data || !data.length) return setLives([])
+    const ids = [...new Set(data.map(l => l.user_id))]
+    const { data: profs } = await supabase.from('profiles').select('id, nom').in('id', ids)
+    const noms = {}
+    ;(profs || []).forEach(x => { noms[x.id] = x.nom })
+    setLives(data.map(l => ({ ...l, nom: noms[l.user_id] || 'Un membre' })))
+  }, [groupId, chaine, user.id])
+  useEffect(() => {
+    chargerLives()
+    const t = setInterval(chargerLives, 30000)
+    return () => clearInterval(t)
+  }, [chargerLives])
 
   async function choisir(e) {
     const f = e.target.files[0]
@@ -104,6 +129,16 @@ export default function Fil({ user, groupId = null, chaine = null }) {
     <>
       {!groupId && !chaine && <Stories user={user} />}
       {!groupId && !chaine && <SuggestionsFil user={user} />}
+      {!groupId && !chaine && (
+        <div className="box">
+          <Link className="alt sm bouton" href="/live">🔴 Passer en live</Link>
+          {lives.map(l => (
+            <p key={l.id} style={{ margin: '10px 0 0' }}>
+              🔴 <b>{l.nom}</b> est en direct : <Link href={'/live/' + l.room}>{l.titre || 'Regarder le live'}</Link>
+            </p>
+          ))}
+        </div>
+      )}
       <form className="box" onSubmit={publier} style={chaine ? { display: 'none' } : undefined}>
         <textarea rows={3} value={texte} onChange={e => setTexte(e.target.value)} placeholder="Quoi de neuf ?" aria-label="Nouvelle publication" />
         {image && <div className="apercu"><img className="photo" src={image} alt="Aperçu" /><button type="button" className="alt sm" onClick={() => setImage(null)}>Retirer la photo</button></div>}
