@@ -7,6 +7,7 @@ import { useUser } from '@/lib/useUser'
 import Logo from '@/components/Logo'
 import Appel from '@/components/Appel'
 import Icone from '@/components/Icones'
+import IconeLive from '@/components/IconeLive'
 import { jouer } from '@/lib/sons'
 
 // Barre du haut (ordinateur) et barre du bas (téléphone)
@@ -16,6 +17,7 @@ const PRINCIPAL = [
 ]
 // Menu « Plus »
 const PLUS = [
+  ['/live', 'Passer en live', 'live'],
   ['/chaines', 'Chaînes', 'etoile'],
   ['/groupes', 'Groupes', 'groupe'], ['/createurs', 'Créateurs', 'etoile'], ['/proximite', 'À proximité', 'position'],
   ['/evenements', 'Événements', 'calendrier'], ['/jeux', 'Jeux', 'jeux', true], ['/recherche', 'Recherche', 'recherche'],
@@ -86,7 +88,9 @@ export default function Shell({ children }) {
           <div className="feuille-contenu" onClick={e => e.stopPropagation()} role="dialog" aria-label="Menu">
             <div className="grille-plus">
               {PLUS.map(([href, nom, ic, mobile]) => (
-                <Link key={href} href={href} className={(mobile ? 'seulement-mobile ' : '') + (estActif(path, href) ? 'actif' : '')}><Icone nom={ic} taille={26} /><span>{nom}</span></Link>
+                <Link key={href} href={href} className={(mobile ? 'seulement-mobile ' : '') + (estActif(path, href) ? 'actif' : '')}>
+                  {ic === 'live' ? <IconeLive taille={26} /> : <Icone nom={ic} taille={26} />}<span>{nom}</span>
+                </Link>
               ))}
             </div>
             <button className="alt deconnexion" onClick={() => supabase.auth.signOut()}><Icone nom="sortie" /> Se déconnecter</button>
