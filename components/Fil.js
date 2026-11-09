@@ -11,7 +11,7 @@ import SuggestionsFil from '@/components/SuggestionsFil'
 import Verifie from '@/components/Verifie'
 
 const REACTIONS = [['coeur', '❤️'], ['rire', '😂'], ['wow', '😮'], ['triste', '😢'], ['pouce', '👍']]
-const SELECTION = 'id, texte, image_url, created_at, auteur, partage_de, sondage, poll_votes(user_id, choix), profiles!auteur(nom, avatar_url, verifie), reactions(user_id, emoji), comments(id, texte, created_at, auteur, profiles(nom, avatar_url, verifie)), original:posts!partage_de(texte, image_url, auteur, profiles!auteur(nom, verifie))'
+const SELECTION = 'id, texte, image_url, video_url, created_at, auteur, partage_de, sondage, poll_votes(user_id, choix), profiles!auteur(nom, avatar_url, verifie), reactions(user_id, emoji), comments(id, texte, created_at, auteur, profiles(nom, avatar_url, verifie)), original:posts!partage_de(texte, image_url, video_url, auteur, profiles!auteur(nom, verifie))'
 
 function Commentaire({ postId, user, apres }) {
   const [t, setT] = useState('')
@@ -34,6 +34,9 @@ export default function Fil({ user, groupId = null, chaine = null }) {
   const [texte, setTexte] = useState('')
   const [image, setImage] = useState(null)
   const [sondage, setSondage] = useState(null)
+  const [video, setVideo] = useState(null)
+  const [videoApercu, setVideoApercu] = useState('')
+  const [envoi, setEnvoi] = useState(false)
   const [info, setInfo] = useState('')
   const [lives, setLives] = useState([])
 
@@ -72,18 +75,47 @@ export default function Fil({ user, groupId = null, chaine = null }) {
     return () => clearInterval(t)
   }, [chargerLives])
 
+  function retirerVideo() {
+    if (videoApercu) URL.revokeObjectURL(videoApercu)
+    setVideo(null); setVideoApercu('')
+  }
   async function choisir(e) {
     const f = e.target.files[0]
-    if (f) setImage(await redimensionner(f))
+    e.target.value = ''
+    if (f) { setImage(await redimensionner(f)); retirerVideo() }
+  }
+  function choisirVideo(e) {
+    const f = e.target.files[0]
+    e.target.value = ''
+    if (!f) return
+    if (f.size > 50 * 1024 * 1024) return setInfo('La vidéo dépasse 50 Mo. Choisis une vidéo plus courte (environ 1 minute).')
+    setInfo(''); setImage(null)
+    if (videoApercu) URL.revokeObjectURL(videoApercu)
+    setVideo(f); setVideoApercu(URL.createObjectURL(f))
   }
   async function publier(e) {
     e.preventDefault()
+    if (envoi) return
     const options = sondage ? sondage.map(o => o.trim()).filter(Boolean) : null
     if (options && options.length < 2) return setInfo('Un sondage a besoin d’au moins 2 choix.')
-    if (!texte.trim() && !image && !options) return
-    const { error } = await supabase.from('posts').insert({ auteur: user.id, texte: texte.trim(), image_url: image, sondage: options, group_id: groupId })
-    if (error) return setInfo('Publication impossible.')
-    setTexte(''); setImage(null); setSondage(null); setInfo(''); charger()
+    if (!texte.trim() && !image && !options && !video) return
+    setEnvoi(true); setInfo('')
+    let videoUrl = null
+    let chemin = null
+    if (video) {
+      const ext = (video.name.split('.').pop() || 'mp4').toLowerCase().replace(/[^a-z0-9]/g, '')
+      chemin = user.id + '/' + Date.now() + '-' + Math.random().toString(36).slice(2) + '.' + ext
+      const { error: ev } = await supabase.storage.from('videos-fil').upload(chemin, video, { contentType: video.type || 'video/mp4' })
+      if (ev) { setEnvoi(false); return setInfo('Envoi de la vidéo impossible : ' + ev.message) }
+      videoUrl = supabase.storage.from('videos-fil').getPublicUrl(chemin).data.publicUrl
+    }
+    const { error } = await supabase.from('posts').insert({ auteur: user.id, texte: texte.trim(), image_url: image, video_url: videoUrl, sondage: options, group_id: groupId })
+    setEnvoi(false)
+    if (error) {
+      if (chemin) await supabase.storage.from('videos-fil').remove([chemin])
+      return setInfo('Publication impossible.')
+    }
+    setTexte(''); setImage(null); setSondage(null); retirerVideo(); setInfo(''); charger()
   }
   async function reagir(p, cle) {
     const ma = p.reactions.find(r => r.user_id === user.id)
@@ -111,7 +143,15 @@ export default function Fil({ user, groupId = null, chaine = null }) {
     setInfo(error ? 'Modification impossible.' : 'Publication modifiée.')
     charger()
   }
-  async function supprimer(id) { await supabase.from('posts').delete().eq('id', id); charger() }
+  async function supprimer(id) {
+    const p = posts.find(x => x.id === id)
+    if (p && p.video_url && p.auteur === user.id) {
+      const c = p.video_url.split('/videos-fil/')[1]
+      if (c) await supabase.storage.from('videos-fil').remove([decodeURIComponent(c)])
+    }
+    await supabase.from('posts').delete().eq('id', id)
+    charger()
+  }
   async function signaler(id) {
     const motif = window.prompt('Pourquoi signales-tu cette publication ? (spam, harcèlement, contenu inapproprié, autre)', '')
     if (motif === null) return
@@ -141,6 +181,12 @@ export default function Fil({ user, groupId = null, chaine = null }) {
       <form className="box" onSubmit={publier} style={chaine ? { display: 'none' } : undefined}>
         <textarea rows={3} value={texte} onChange={e => setTexte(e.target.value)} placeholder="Quoi de neuf ?" aria-label="Nouvelle publication" />
         {image && <div className="apercu"><img className="photo" src={image} alt="Aperçu" /><button type="button" className="alt sm" onClick={() => setImage(null)}>Retirer la photo</button></div>}
+        {video && (
+          <div className="apercu">
+            <video src={videoApercu} controls playsInline style={{ display: 'block', width: '100%', maxHeight: 320, borderRadius: 12, background: '#000' }} />
+            <button type="button" className="alt sm" style={{ marginTop: 8 }} onClick={retirerVideo}>Retirer la vidéo</button>
+          </div>
+        )}
         {sondage && (
           <div className="sondage">
             {sondage.map((o, i) => (
@@ -151,8 +197,9 @@ export default function Fil({ user, groupId = null, chaine = null }) {
         )}
         <div className="actions">
           <label className="alt sm bouton">📷 Photo<input type="file" accept="image/*" hidden onChange={choisir} /></label>
+          <label className="alt sm bouton">🎥 Vidéo<input type="file" accept="video/*" hidden onChange={choisirVideo} /></label>
           <button type="button" className="alt sm" onClick={() => setSondage(sondage ? null : ['', ''])}>📊 Sondage</button>
-          <button>Publier</button>
+          <button disabled={envoi}>{envoi ? (video ? 'Envoi de la vidéo…' : 'Publication…') : 'Publier'}</button>
         </div>
       </form>
       {info && <p className="msg err" role="status">{info}</p>}
@@ -169,9 +216,10 @@ export default function Fil({ user, groupId = null, chaine = null }) {
             {p.texte && <p className="texte"><Texte t={p.texte} /></p>}
             {p.texte && <Traduire texte={p.texte} auto />}
             {p.image_url && <img className="photo" src={p.image_url} alt="Photo publiée" />}
+            {p.video_url && <video src={p.video_url} controls playsInline preload="metadata" style={{ display: 'block', width: '100%', maxHeight: 460, borderRadius: 12, background: '#000', marginTop: 8 }} />}
             {p.partage_de && (
               <div className="partage">
-                {p.original ? (<><Link className="lienmembre" href={'/membre/' + p.original.auteur}><b>{p.original.profiles?.nom || 'Membre'}</b></Link>{p.original.profiles?.verifie && <Verifie />}{p.original.texte && <p className="texte">{p.original.texte}</p>}{p.original.image_url && <img className="photo" src={p.original.image_url} alt="Photo partagée" />}</>)
+                {p.original ? (<><Link className="lienmembre" href={'/membre/' + p.original.auteur}><b>{p.original.profiles?.nom || 'Membre'}</b></Link>{p.original.profiles?.verifie && <Verifie />}{p.original.texte && <p className="texte">{p.original.texte}</p>}{p.original.image_url && <img className="photo" src={p.original.image_url} alt="Photo partagée" />}{p.original.video_url && <video src={p.original.video_url} controls playsInline preload="metadata" style={{ display: 'block', width: '100%', maxHeight: 360, borderRadius: 12, background: '#000', marginTop: 8 }} />}</>)
                   : <span className="muted">Publication indisponible.</span>}
               </div>
             )}
