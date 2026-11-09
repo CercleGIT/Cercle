@@ -129,11 +129,10 @@ export default function Fil({ user, groupId = null, chaine = null }) {
     <>
       {!groupId && !chaine && <Stories user={user} />}
       {!groupId && !chaine && <SuggestionsFil user={user} />}
-      {!groupId && !chaine && (
+      {!groupId && !chaine && lives.length > 0 && (
         <div className="box">
-          <Link className="alt sm bouton" href="/live">🔴 Passer en live</Link>
-          {lives.map(l => (
-            <p key={l.id} style={{ margin: '10px 0 0' }}>
+          {lives.map((l, i) => (
+            <p key={l.id} style={{ margin: i === 0 ? 0 : '10px 0 0' }}>
               🔴 <b>{l.nom}</b> est en direct : <Link href={'/live/' + l.room}>{l.titre || 'Regarder le live'}</Link>
             </p>
           ))}
