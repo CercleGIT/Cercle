@@ -7,6 +7,8 @@ import Icone from '@/components/Icones'
 import Verifie from '@/components/Verifie'
 import MessageVocal from '@/components/MessageVocal'
 import Traduire from '@/components/Traduire'
+import ChoixFond from '@/components/ChoixFond'
+import { ecrireFond, lireFond, styleFond } from '@/lib/fonds'
 import { jouer } from '@/lib/sons'
 import { supabase } from '@/lib/supabase'
 import { redimensionner } from '@/lib/image'
@@ -41,6 +43,7 @@ function Messages({ user }) {
   const [texte, setTexte] = useState('')
   const [photo, setPhoto] = useState(null)
   const [vide, setVide] = useState(false)
+  const [fond, setFond] = useState('defaut')
   const corps = useRef(null)
   const dernierEntrant = useRef(null)
   const dejaVoulu = useRef(false)
@@ -53,6 +56,9 @@ function Messages({ user }) {
   const debut = useRef(0)
   const dureeRef = useRef(0)
   const minuteur = useRef(null)
+
+  useEffect(() => { setFond(lireFond()) }, [])
+  const choisirFond = id => { setFond(id); ecrireFond(id) }
 
   useEffect(() => {
     const q = new URLSearchParams(window.location.search)
@@ -244,11 +250,12 @@ function Messages({ user }) {
                 <b>{actif.nom}</b>{actif.verifie && <Verifie />}
                 <div className="muted">{enLigne(actif.derniere_activite) ? 'En ligne' : 'Hors ligne'}</div>
               </div>
+              <ChoixFond valeur={fond} onChoisir={choisirFond} />
               <button className="btn-rond" onClick={() => appeler(actif, false)} aria-label="Appel vocal"><Icone nom="telephone" /></button>
               <button className="btn-rond" onClick={() => appeler(actif, true)} aria-label="Appel vidéo"><Icone nom="video" /></button>
             </div>
 
-            <div className="fil-corps" ref={corps}>
+            <div className="fil-corps" ref={corps} style={styleFond(fond)}>
               {!fil.length && <p className="muted" style={{ textAlign: 'center', margin: 'auto' }}>Aucun message pour le moment. Écris le premier !</p>}
               {fil.map((m, i) => (
                 <div key={m.id} style={{ display: 'contents' }}>
