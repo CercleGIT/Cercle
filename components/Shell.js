@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { useUser } from '@/lib/useUser'
 import Logo from '@/components/Logo'
@@ -28,12 +28,16 @@ const estActif = (path, href) => (href === '/' ? path === '/' : path === href ||
 export default function Shell({ children }) {
   const user = useUser()
   const path = usePathname()
+  const router = useRouter()
   const [nb, setNb] = useState(0)
   const [nbMsg, setNbMsg] = useState(0)
   const [plus, setPlus] = useState(false)
   const prev = useRef({ notif: null, msg: null })
 
   useEffect(() => { setPlus(false) }, [path])
+
+  // Touche de retour : revient à la page précédente (ou au Fil s'il n'y en a pas)
+  const retour = () => { if (window.history.length > 1) router.back(); else router.push('/') }
 
   useEffect(() => {
     if (!user) return
@@ -69,6 +73,9 @@ export default function Shell({ children }) {
   return (
     <>
       <header className="entete-app">
+        {path !== '/' && (
+          <button type="button" className="btn-rond" onClick={retour} aria-label="Retour" title="Retour"><Icone nom="retour" /></button>
+        )}
         <Link href="/" className="logo-lien" aria-label="Accueil"><Logo /></Link>
         <nav className="nav-principal" aria-label="Navigation principale">
           {PRINCIPAL.map(([href, nom, ic]) => (
