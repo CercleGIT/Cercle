@@ -8,11 +8,15 @@ import Verifie from '@/components/Verifie'
 import MessageVocal from '@/components/MessageVocal'
 import Traduire from '@/components/Traduire'
 import ChoixFond from '@/components/ChoixFond'
+import ChoixSticker from '@/components/ChoixSticker'
+import Sticker, { StyleStickers } from '@/components/Sticker'
+import { codeSticker, idSticker } from '@/lib/stickers'
 import { ecrireFond, lireFond, styleFond } from '@/lib/fonds'
 import { jouer } from '@/lib/sons'
 import { supabase } from '@/lib/supabase'
 import { redimensionner } from '@/lib/image'
 
+const STYLE_STICKER = { background: 'none', border: 0, padding: 0, boxShadow: 'none' }
 const enLigne = d => d && Date.now() - new Date(d).getTime() < 150000
 const appeler = (ami, video) => window.dispatchEvent(new CustomEvent('cercle-appel', { detail: { id: ami.id, nom: ami.nom, avatar: ami.avatar_url, video } }))
 const memeJour = (a, b) => new Date(a).toDateString() === new Date(b).toDateString()
@@ -28,7 +32,7 @@ function heureListe(d) {
   return j.toDateString() === new Date().toDateString() ? heure(d) : j.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
 }
 function resume(m, moi) {
-  const base = m.audio_path ? '🎤 Message vocal' : m.image_url ? '📷 Photo' : m.texte || ''
+  const base = m.audio_path ? '🎤 Message vocal' : m.image_url ? '📷 Photo' : idSticker(m.texte) ? '🎭 Autocollant' : m.texte || ''
   return (m.expediteur === moi ? 'Toi : ' : '') + base
 }
 
@@ -194,6 +198,11 @@ function Messages({ user }) {
     if (f) setPhoto(await redimensionner(f, 700, 0.7))
     e.target.value = ''
   }
+  async function envoyerSticker(id) {
+    if (!actif) return
+    await supabase.from('messages').insert({ expediteur: user.id, destinataire: actif.id, texte: codeSticker(id) })
+    charger(); chargerAmis()
+  }
   async function envoyer(e) {
     e.preventDefault()
     if ((!texte.trim() && !photo) || !actif) return
@@ -206,6 +215,7 @@ function Messages({ user }) {
 
   return (
     <div className={'messagerie' + (conv ? ' conv-ouverte' : '')}>
+      <StyleStickers />
       <aside className="liste-conv">
         <div className="liste-conv-tete">
           <h2>Messages</h2>
@@ -260,12 +270,12 @@ function Messages({ user }) {
               {fil.map((m, i) => (
                 <div key={m.id} style={{ display: 'contents' }}>
                   {(i === 0 || !memeJour(fil[i - 1].created_at, m.created_at)) && <span className="jour-sep">{etiquetteJour(m.created_at)}</span>}
-                  <div className={'bulle-msg' + (m.expediteur === user.id ? ' moi' : '')}>
+                  <div className={'bulle-msg' + (m.expediteur === user.id ? ' moi' : '')} style={idSticker(m.texte) ? STYLE_STICKER : undefined}>
                     {m.image_url && <img src={m.image_url} alt="Photo envoyée" />}
                     {m.audio_path && <MessageVocal chemin={m.audio_path} />}
-                    {m.texte}
-                    {m.texte && m.expediteur !== user.id && <Traduire texte={m.texte} />}
-                    <span className="heure-msg">{heure(m.created_at)}{m.id === dernierMien?.id && m.lu ? ' · Vu' : ''}</span>
+                    {idSticker(m.texte) ? <Sticker id={idSticker(m.texte)} taille={110} /> : m.texte}
+                    {!idSticker(m.texte) && m.texte && m.expediteur !== user.id && <Traduire texte={m.texte} />}
+                    <span className="heure-msg" style={idSticker(m.texte) ? { color: 'var(--mute)', textAlign: 'center' } : undefined}>{heure(m.created_at)}{m.id === dernierMien?.id && m.lu ? ' · Vu' : ''}</span>
                   </div>
                 </div>
               ))}
@@ -284,6 +294,7 @@ function Messages({ user }) {
                 </>
               ) : (
                 <>
+                  <ChoixSticker onChoisir={envoyerSticker} />
                   <button type="button" className="btn-rond" onClick={demarrerVocal} aria-label="Enregistrer un message vocal"><Icone nom="micro" /></button>
                   <input className="champ-pilule" value={texte} onChange={e => setTexte(e.target.value)} placeholder="Écrire un message" aria-label="Message" />
                   <button className="btn-rond envoi" aria-label="Envoyer"><Icone nom="envoyer" /></button>
