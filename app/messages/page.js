@@ -6,6 +6,7 @@ import Avatar from '@/components/Avatar'
 import Icone from '@/components/Icones'
 import Verifie from '@/components/Verifie'
 import MessageVocal from '@/components/MessageVocal'
+import MessageVideo from '@/components/MessageVideo'
 import Traduire from '@/components/Traduire'
 import ChoixFond from '@/components/ChoixFond'
 import ChoixSticker from '@/components/ChoixSticker'
@@ -32,7 +33,7 @@ function heureListe(d) {
   return j.toDateString() === new Date().toDateString() ? heure(d) : j.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
 }
 function resume(m, moi) {
-  const base = m.audio_path ? '🎤 Message vocal' : m.image_url ? '📷 Photo' : idSticker(m.texte) ? '🎭 Autocollant' : m.texte || ''
+  const base = m.audio_path ? '🎤 Message vocal' : m.image_url ? '📷 Photo' : m.video_path ? '🎥 Vidéo' : idSticker(m.texte) ? '🎭 Autocollant' : m.texte || ''
   return (m.expediteur === moi ? 'Toi : ' : '') + base
 }
 
@@ -46,6 +47,9 @@ function Messages({ user }) {
   const [fil, setFil] = useState([])
   const [texte, setTexte] = useState('')
   const [photo, setPhoto] = useState(null)
+  const [video, setVideo] = useState(null)
+  const [videoApercu, setVideoApercu] = useState('')
+  const [envoiVideo, setEnvoiVideo] = useState(false)
   const [vide, setVide] = useState(false)
   const [fond, setFond] = useState('defaut')
   const corps = useRef(null)
@@ -75,7 +79,7 @@ function Messages({ user }) {
   const chargerAmis = useCallback(async () => {
     const voulu = new URLSearchParams(window.location.search).get('ami')
     const { data: l } = await supabase.from('friendships').select('demandeur, destinataire').eq('statut', 'accepte')
-    const { data: ms } = await supabase.from('messages').select('id, expediteur, destinataire, texte, image_url, audio_path, created_at')
+    const { data: ms } = await supabase.from('messages').select('id, expediteur, destinataire, texte, image_url, audio_path, video_path, created_at')
       .order('created_at', { ascending: false }).limit(400)
     const ap = {}
     ;(ms || []).forEach(m => {
@@ -117,7 +121,7 @@ function Messages({ user }) {
 
   const charger = useCallback(async () => {
     if (!actif) return
-    const { data } = await supabase.from('messages').select('id, expediteur, texte, image_url, audio_path, audio_duree, lu, created_at')
+    const { data } = await supabase.from('messages').select('id, expediteur, texte, image_url, audio_path, audio_duree, video_path, lu, created_at')
       .or(`and(expediteur.eq.${user.id},destinataire.eq.${actif.id}),and(expediteur.eq.${actif.id},destinataire.eq.${user.id})`)
       .order('created_at', { ascending: true }).limit(200)
     setFil(data || [])
@@ -193,10 +197,23 @@ function Messages({ user }) {
   }
   const mmss = s => String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0')
 
+  function retirerVideo() {
+    if (videoApercu) URL.revokeObjectURL(videoApercu)
+    setVideo(null); setVideoApercu('')
+  }
   async function choisir(e) {
     const f = e.target.files[0]
-    if (f) setPhoto(await redimensionner(f, 700, 0.7))
     e.target.value = ''
+    if (f) { setPhoto(await redimensionner(f, 700, 0.7)); retirerVideo() }
+  }
+  function choisirVideo(e) {
+    const f = e.target.files[0]
+    e.target.value = ''
+    if (!f) return
+    if (f.size > 50 * 1024 * 1024) return setErreurVocal('La vidéo dépasse 50 Mo. Choisis une vidéo plus courte (environ 1 minute).')
+    setErreurVocal(''); setPhoto(null)
+    if (videoApercu) URL.revokeObjectURL(videoApercu)
+    setVideo(f); setVideoApercu(URL.createObjectURL(f))
   }
   async function envoyerSticker(id) {
     if (!actif) return
@@ -205,9 +222,22 @@ function Messages({ user }) {
   }
   async function envoyer(e) {
     e.preventDefault()
-    if ((!texte.trim() && !photo) || !actif) return
-    await supabase.from('messages').insert({ expediteur: user.id, destinataire: actif.id, texte: texte.trim(), image_url: photo })
-    setTexte(''); setPhoto(null); charger(); chargerAmis()
+    if ((!texte.trim() && !photo && !video) || !actif || envoiVideo) return
+    let chemin = null
+    if (video) {
+      setEnvoiVideo(true); setErreurVocal('')
+      const ext = (video.name.split('.').pop() || 'mp4').toLowerCase().replace(/[^a-z0-9]/g, '')
+      chemin = user.id + '/' + Date.now() + '-' + Math.random().toString(36).slice(2) + '.' + ext
+      const { error: ev } = await supabase.storage.from('videos-messages').upload(chemin, video, { contentType: video.type || 'video/mp4' })
+      if (ev) { setEnvoiVideo(false); return setErreurVocal('Envoi de la vidéo impossible : ' + ev.message) }
+    }
+    const { error } = await supabase.from('messages').insert({ expediteur: user.id, destinataire: actif.id, texte: texte.trim(), image_url: photo, video_path: chemin })
+    setEnvoiVideo(false)
+    if (error) {
+      if (chemin) await supabase.storage.from('videos-messages').remove([chemin])
+      return setErreurVocal('Envoi impossible.')
+    }
+    setTexte(''); setPhoto(null); retirerVideo(); charger(); chargerAmis()
   }
 
   if (vide) return <p className="muted">Ajoute d’abord des amis pour discuter. <Link href="/amis">Trouver des amis</Link></p>
@@ -273,6 +303,7 @@ function Messages({ user }) {
                   <div className={'bulle-msg' + (m.expediteur === user.id ? ' moi' : '')} style={idSticker(m.texte) ? STYLE_STICKER : undefined}>
                     {m.image_url && <img src={m.image_url} alt="Photo envoyée" />}
                     {m.audio_path && <MessageVocal chemin={m.audio_path} />}
+                    {m.video_path && <MessageVideo chemin={m.video_path} />}
                     {idSticker(m.texte) ? <Sticker id={idSticker(m.texte)} taille={110} /> : m.texte}
                     {!idSticker(m.texte) && m.texte && m.expediteur !== user.id && <Traduire texte={m.texte} />}
                     <span className="heure-msg" style={idSticker(m.texte) ? { color: 'var(--mute)', textAlign: 'center' } : undefined}>{heure(m.created_at)}{m.id === dernierMien?.id && m.lu ? ' · Vu' : ''}</span>
@@ -282,9 +313,16 @@ function Messages({ user }) {
             </div>
 
             {photo && <div className="apercu" style={{ padding: '8px 14px' }}><img className="photo" style={{ maxHeight: 140, width: 'auto' }} src={photo} alt="Aperçu" /><button type="button" className="alt sm" onClick={() => setPhoto(null)}>Retirer la photo</button></div>}
+            {video && (
+              <div className="apercu" style={{ padding: '8px 14px' }}>
+                <video src={videoApercu} controls playsInline style={{ display: 'block', maxWidth: 260, maxHeight: 180, borderRadius: 12, background: '#000' }} />
+                <button type="button" className="alt sm" style={{ marginTop: 6 }} onClick={retirerVideo}>Retirer la vidéo</button>
+              </div>
+            )}
             {erreurVocal && <p className="msg err" role="status" style={{ padding: '0 14px' }}>{erreurVocal}</p>}
             <form className="compositeur" onSubmit={envoyer}>
               <label className="btn-rond" aria-label="Joindre une photo"><Icone nom="image" /><input type="file" accept="image/*" hidden onChange={choisir} /></label>
+              <label className="btn-rond" aria-label="Joindre une vidéo" title="Joindre une vidéo"><Icone nom="video" /><input type="file" accept="video/*" hidden onChange={choisirVideo} /></label>
               {enregistre ? (
                 <>
                   <span className="rec"><span className="rec-point" /> {mmss(duree)}</span>
@@ -296,8 +334,8 @@ function Messages({ user }) {
                 <>
                   <ChoixSticker onChoisir={envoyerSticker} />
                   <button type="button" className="btn-rond" onClick={demarrerVocal} aria-label="Enregistrer un message vocal"><Icone nom="micro" /></button>
-                  <input className="champ-pilule" value={texte} onChange={e => setTexte(e.target.value)} placeholder="Écrire un message" aria-label="Message" />
-                  <button className="btn-rond envoi" aria-label="Envoyer"><Icone nom="envoyer" /></button>
+                  <input className="champ-pilule" value={texte} onChange={e => setTexte(e.target.value)} placeholder={envoiVideo ? 'Envoi de la vidéo…' : 'Écrire un message'} aria-label="Message" />
+                  <button className="btn-rond envoi" aria-label="Envoyer" disabled={envoiVideo}><Icone nom="envoyer" /></button>
                 </>
               )}
             </form>
