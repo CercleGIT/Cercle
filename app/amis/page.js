@@ -12,6 +12,20 @@ const raisons = s => [
   s.distance_km && 'à moins de ' + s.distance_km + ' km',
 ].filter(Boolean).join(' · ')
 
+// Ligne d'un membre : la photo et le nom ouvrent son profil
+function Ligne({ id, profil, children }) {
+  return (
+    <div className="resultat">
+      <Avatar nom={profil?.nom || '?'} url={profil?.avatar_url} taille={42} id={id} />
+      <div>
+        <Link className="lienmembre" href={'/membre/' + id}><b>{profil?.nom || 'Membre'}</b></Link>
+        {profil?.verifie && <Verifie />}
+      </div>
+      {children}
+    </div>
+  )
+}
+
 function Suggestions({ user, apres }) {
   const [liste, setListe] = useState(null)
   const [masques, setMasques] = useState([])
@@ -60,7 +74,7 @@ function Suggestions({ user, apres }) {
 
 function Amis({ user }) {
   const [liens, setLiens] = useState([])      // amitiés me concernant
-  const [noms, setNoms] = useState({})        // id -> prénom
+  const [profils, setProfils] = useState({})  // id -> { nom, avatar_url, verifie }
   const [recherche, setRecherche] = useState('')
   const [trouves, setTrouves] = useState([])
   const [info, setInfo] = useState('')
@@ -71,8 +85,8 @@ function Amis({ user }) {
     setLiens(l)
     const ids = [...new Set(l.flatMap(x => [x.demandeur, x.destinataire]))]
     if (ids.length) {
-      const { data: ps } = await supabase.from('profiles').select('id, nom').in('id', ids)
-      setNoms(Object.fromEntries((ps || []).map(p => [p.id, p.nom])))
+      const { data: ps } = await supabase.from('profiles').select('id, nom, avatar_url, verifie').in('id', ids)
+      setProfils(Object.fromEntries((ps || []).map(p => [p.id, p])))
     }
   }, [])
   useEffect(() => { charger() }, [charger])
@@ -81,7 +95,7 @@ function Amis({ user }) {
     const q = e.target.value
     setRecherche(q)
     if (q.trim().length < 2) return setTrouves([])
-    const { data } = await supabase.from('profiles').select('id, nom').ilike('nom', `%${q.trim()}%`).neq('id', user.id).limit(10)
+    const { data } = await supabase.from('profiles').select('id, nom, avatar_url, verifie').ilike('nom', `%${q.trim()}%`).neq('id', user.id).limit(10)
     setTrouves(data || [])
   }
   const lien = id => liens.find(l => [l.demandeur, l.destinataire].includes(id))
@@ -106,11 +120,10 @@ function Amis({ user }) {
         {trouves.map(p => {
           const l = lien(p.id)
           return (
-            <div className="ligne" key={p.id}>
-              <span>{p.nom}</span>
+            <Ligne key={p.id} id={p.id} profil={p}>
               {l ? <span className="muted">{l.statut === 'accepte' ? 'Ami' : 'En attente'}</span>
                  : <button className="sm" onClick={() => ajouter(p.id)}>Ajouter</button>}
-            </div>
+            </Ligne>
           )
         })}
         {info && <p className="msg ok" role="status">{info}</p>}
@@ -118,19 +131,17 @@ function Amis({ user }) {
       <section className="box">
         <h2>Demandes reçues ({recues.length})</h2>
         {recues.map(l => (
-          <div className="ligne" key={l.id}>
-            <span>{noms[l.demandeur] || 'Membre'}</span>
+          <Ligne key={l.id} id={l.demandeur} profil={profils[l.demandeur]}>
             <span><button className="sm" onClick={() => accepter(l.id)}>Accepter</button> <button className="alt sm" onClick={() => retirer(l.id)}>Refuser</button></span>
-          </div>
+          </Ligne>
         ))}
       </section>
       <section className="box">
         <h2>Mes amis ({amis.length})</h2>
         {amis.map(l => (
-          <div className="ligne" key={l.id}>
-            <span>{noms[autre(l)] || 'Membre'}</span>
+          <Ligne key={l.id} id={autre(l)} profil={profils[autre(l)]}>
             <button className="alt sm" onClick={() => retirer(l.id)}>Retirer</button>
-          </div>
+          </Ligne>
         ))}
       </section>
     </>
