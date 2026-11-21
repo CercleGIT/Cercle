@@ -22,8 +22,8 @@ begin
     exception when others then
       raise exception 'Date de naissance invalide';
     end;
-    if d > (current_date - interval '16 years')::date then
-      raise exception 'Age minimum : 16 ans';
+    if d > (current_date - interval '18 years')::date then
+      raise exception 'Age minimum : 18 ans';
     end if;
     insert into infos_privees(user_id, prenom, nom_famille, date_naissance, pays, telephone)
     values (new.id, left(m->>'prenom', 60), left(m->>'nom_famille', 60), d, left(m->>'pays', 60), left(m->>'telephone', 20))

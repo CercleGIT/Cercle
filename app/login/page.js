@@ -20,7 +20,7 @@ function erreurFr(message) {
   return 'Une erreur est survenue : ' + t
 }
 
-const AGE_MIN = 16
+const AGE_MIN = 18
 const aujourdhui = new Date().toISOString().slice(0, 10)
 
 export default function Login() {
