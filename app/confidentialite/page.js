@@ -10,10 +10,11 @@ export default function Page() {
 
       <h2>Quelles données collectons-nous ?</h2>
       <ul>
-        <li><b>Compte</b> : adresse e-mail, mot de passe (stocké sous forme chiffrée), prénom.</li>
+        <li><b>Compte</b> : adresse e-mail, mot de passe (stocké sous forme chiffrée), prénom et nom.</li>
+        <li><b>Informations privées</b> : date de naissance, pays de résidence et numéro de téléphone, demandés à l’inscription. Elles ne sont jamais affichées aux autres membres.</li>
         <li><b>Profil</b> : photo, texte « à propos de moi » (facultatifs).</li>
-        <li><b>Contenus</b> : publications, photos, commentaires, réactions, sondages, stories, messages privés, groupes et événements.</li>
-        <li><b>Relations</b> : demandes d’amis, amitiés, membres bloqués, signalements.</li>
+        <li><b>Contenus</b> : publications, photos, vidéos, commentaires, réactions, sondages, stories, messages privés (texte, photos, vidéos et messages vocaux), groupes, événements et lives en direct.</li>
+        <li><b>Relations</b> : demandes d’amis, amitiés, abonnements, membres bloqués, signalements.</li>
         <li><b>Position approximative</b> (facultatif) : uniquement si tu actives la fonction « À proximité », arrondie à environ 1 km.</li>
         <li><b>Profil créateur</b> (facultatif) : activité, présentation, services, réalisations et contact public que tu choisis de publier.</li>
         <li><b>Activité</b> : date de dernière activité (pour afficher « en ligne »), notifications.</li>
@@ -21,10 +22,16 @@ export default function Page() {
       </ul>
 
       <h2>Pourquoi ?</h2>
-      <p>Uniquement pour faire fonctionner le réseau : créer ton compte, afficher tes contenus aux personnes que tu choisis, t’envoyer des notifications, assurer la sécurité et la modération. Nous ne vendons pas tes données et nous n’affichons pas de publicité.</p>
+      <p>Uniquement pour faire fonctionner le réseau : créer ton compte, vérifier que tu as au moins 18 ans, afficher tes contenus aux personnes que tu choisis, t’envoyer des notifications, assurer la sécurité et la modération. Nous ne vendons pas tes données et nous n’affichons pas de publicité.</p>
 
       <h2>Qui voit tes contenus ?</h2>
       <p>Les publications du fil général sont visibles par les membres connectés. Les publications d’un groupe sont visibles par ses membres. Les messages privés ne sont visibles que par toi et ton correspondant. Les stories sont visibles par tes amis et ne s’affichent plus après 24 heures. Un membre bloqué ne voit plus tes publications.</p>
+
+      <h2>Qui peut voir tes informations privées ?</h2>
+      <p>Ton adresse e-mail, ta date de naissance, ton pays de résidence et ton numéro de téléphone ne sont visibles par aucun autre membre. Seuls les administrateurs de Cercle peuvent y accéder, pour la sécurité des comptes, la lutte contre la fraude, la modération et le respect des conditions d’utilisation.</p>
+
+      <h2>Modération et détection des contenus interdits</h2>
+      <p>Pour protéger les membres, Cercle détecte automatiquement certains mots associés aux contenus interdits (menaces, arnaques, drogues, armes, contenus sexuels, haine…) dans les publications, commentaires et annonces. Une détection déclenche une alerte examinée par un administrateur, qui décide de supprimer le contenu ou de l’ignorer : aucune sanction n’est automatique. Les messages privés ne sont pas analysés automatiquement.</p>
 
       <h2>Combien de temps ?</h2>
       <p>Tes données sont conservées tant que ton compte existe. Si tu le supprimes, elles sont effacées, sauf obligation légale de conservation.</p>
@@ -33,12 +40,13 @@ export default function Page() {
       <p>Cercle utilise uniquement le stockage technique nécessaire pour te garder connecté. Il n’y a aucun cookie publicitaire ni outil de mesure d’audience.</p>
 
       <h2>Hébergeurs et transferts</h2>
-      <p>Les données sont stockées chez Supabase Inc. (serveurs en Irlande) et le site est servi par Vercel Inc. (États-Unis). Tes données peuvent donc être traitées en dehors de ton pays.</p>
+      <p>Les données sont stockées chez Supabase Inc. (serveurs en Irlande) et le site est servi par Vercel Inc. (États-Unis). Pour les appels et les lives, les flux audio et vidéo peuvent transiter par des services spécialisés (relais d’appels, LiveKit pour les lives en direct). Les e-mails de confirmation sont envoyés par un prestataire de messagerie. Tes données peuvent donc être traitées en dehors de ton pays.</p>
 
       <h2>Tes droits</h2>
       <p>Tu peux à tout moment accéder à tes données, les rectifier, les supprimer, t’opposer à leur traitement et demander leur portabilité :</p>
       <ul>
-        <li>depuis la page <b>Profil</b> : modifier tes informations, <b>télécharger tes données</b> et <b>supprimer ton compte</b> ;</li>
+        <li>depuis la page <b>Profil</b> : modifier tes informations et <b>télécharger tes données</b> ;</li>
+        <li>depuis les <b>Paramètres</b> : <b>supprimer ton compte</b> ;</li>
         <li>ou en écrivant à l’adresse de contact ci-dessus.</li>
       </ul>
       <p>Si tu estimes que tes droits ne sont pas respectés, tu peux saisir l’autorité de protection des données de ton pays, par exemple l’Autorité de Protection des Données à caractère Personnel (APDP) au Bénin. <mark>[À COMPLÉTER : mentionne ici l’autorité compétente selon ton pays et celui de tes membres]</mark></p>
@@ -51,7 +59,7 @@ export default function Page() {
       <p>Les publications, commentaires et annonces écrits dans une autre langue que la tienne sont traduits automatiquement : leur texte est envoyé depuis ton appareil à un service de traduction tiers, MyMemory, qui le traite selon ses propres conditions. Tu peux désactiver cette traduction automatique dans Paramètres. Les messages privés ne sont jamais envoyés automatiquement : seul un clic sur « Traduire » les envoie. Ce service ne reçoit pas les autres données de ton compte.</p>
 
       <h2>Mineurs</h2>
-      <p>Cercle est réservé aux personnes de 16 ans et plus. Si tu penses qu’un mineur de moins de 16 ans s’est inscrit, signale-le à l’adresse de contact : le compte sera supprimé.</p>
+      <p>Cercle est réservé aux personnes de 18 ans et plus. Si tu penses qu’un mineur de moins de 18 ans s’est inscrit, signale-le à l’adresse de contact : le compte sera supprimé.</p>
 
       <h2>Sécurité</h2>
       <p>Les échanges sont chiffrés (HTTPS), les mots de passe sont stockés sous forme chiffrée et l’accès aux données est restreint par des règles de sécurité sur la base de données.</p>

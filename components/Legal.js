@@ -6,7 +6,7 @@ export default function Legal({ titre, children }) {
     <main className="legal">
       <Link href="/" aria-label="Retour à l’accueil"><Logo /></Link>
       <h1>{titre}</h1>
-      <p className="maj">Dernière mise à jour : 21 octobre 2026</p>
+      <p className="maj">Dernière mise à jour : 22 novembre 2026</p>
       {children}
     </main>
   )

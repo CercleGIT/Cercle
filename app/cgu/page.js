@@ -9,7 +9,7 @@ export default function Page() {
       <p>Cercle est un réseau social qui permet de retrouver ses amis, de publier, de discuter, de créer des groupes et des événements. En créant un compte, tu acceptes les présentes conditions.</p>
 
       <h2>2. Accès et compte</h2>
-      <p>Tu dois avoir au moins 16 ans. Tu t’engages à donner des informations exactes, à garder ton mot de passe secret et à ne pas créer de compte au nom d’une autre personne. Tu es responsable de l’activité de ton compte.</p>
+      <p>Tu dois avoir au moins 18 ans. Tu t’engages à donner des informations exactes (prénom, nom, date de naissance, pays de résidence, numéro de téléphone et adresse e-mail), à garder ton mot de passe secret et à ne pas créer de compte au nom d’une autre personne. Un compte créé avec de fausses informations, ou par une personne de moins de 18 ans, peut être supprimé. Tu es responsable de l’activité de ton compte.</p>
 
       <h2>3. Règles de conduite</h2>
       <p>Il est interdit de publier ou d’envoyer :</p>
@@ -20,15 +20,16 @@ export default function Page() {
         <li>des arnaques, du spam, des logiciels malveillants ou de la publicité non autorisée ;</li>
         <li>des informations privées sur d’autres personnes sans leur accord.</li>
       </ul>
+      <p>Ces règles s’appliquent à tout ce que tu partages sur Cercle : publications, commentaires, messages, annonces, profils et lives en direct.</p>
 
       <h2>4. Tes contenus</h2>
       <p>Tu restes propriétaire de ce que tu publies. Tu autorises Cercle à les héberger et à les afficher aux personnes que tu choisis, uniquement pour faire fonctionner le service. Tu garantis avoir le droit de publier ces contenus.</p>
 
       <h2>5. Signalement et modération</h2>
-      <p>Chaque membre peut signaler un contenu et bloquer un autre membre. L’éditeur peut supprimer un contenu qui enfreint ces règles, suspendre ou supprimer un compte, sans préavis en cas de manquement grave.</p>
+      <p>Chaque membre peut signaler un contenu et bloquer un autre membre. Pour faire respecter ces règles, Cercle utilise une détection automatique de certains mots dans les contenus publics (publications, commentaires et annonces) ; les messages privés ne sont pas analysés automatiquement. Les administrateurs examinent les contenus signalés ou détectés, peuvent consulter les informations de compte nécessaires à la modération, supprimer un contenu, et suspendre ou supprimer un compte, sans préavis en cas de manquement grave.</p>
 
       <h2>6. Suppression du compte</h2>
-      <p>Tu peux supprimer ton compte à tout moment depuis la page Profil. Tes données sont alors effacées, sauf obligation légale de conservation.</p>
+      <p>Tu peux supprimer ton compte à tout moment depuis les Paramètres. Tes données sont alors effacées, sauf obligation légale de conservation.</p>
 
       <h2>7. Responsabilité</h2>
       <p>Le service est fourni « en l’état », sans garantie de disponibilité permanente. L’éditeur n’est pas responsable des contenus publiés par les membres, mais agit pour retirer promptement ceux qui lui sont signalés comme illicites.</p>
